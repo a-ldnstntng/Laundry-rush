@@ -1,0 +1,15 @@
+# Python & test artifacts
+__pycache__/
+*.py[cod]
+test_*.py
+screenshot_*.png
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Vercel
+.vercel
