@@ -1253,7 +1253,7 @@ class SampayanGame {
 
     // Live Nanay speech reaction on high combo
     if (this.combo >= 3) {
-      const cheerTl = this.combo >= 4 ? 'Yan, ganyan Nak! Ipasok mo na lahat!' : 'Aba, bilis ng kamay ah! Parang kidlat!';
+      const cheerTl = this.combo >= 4 ? 'Yan, ganyan Nak! Ilagay mo na lahat!' : 'Aba, bilis ng kamay ah! Parang kidlat!';
       const cheerEn = this.combo >= 4 ? "That's it! Bring them all inside!" : 'Whoa, fast hands! Like lightning!';
       this.setNanaySpeech(cheerTl, cheerEn, 2.0, 'cheer');
     }
@@ -1624,9 +1624,9 @@ class SampayanGame {
         'Nak, kilos na! Mag-aamoy kulob na naman yan!',
       ];
       const drizzleQuotesEn = [
-        "NAK! The laundry! It's starting to drizzle!",
+        "SON! The laundry! It's starting to drizzle!",
         "Always on that phone—you didn't notice the rain!",
-        'Move it, Nak! The clothes are gonna smell musty!',
+        'Move it, son! The clothes are gonna smell musty!',
       ];
       // Round 1 uses the iconic "NAK! Yung sinampay! Umaambon na oh!", later rounds rotate
       const rIdx = this.round === 1 ? 0 : Math.floor(Math.random() * drizzleQuotesTl.length);
@@ -2766,7 +2766,7 @@ class SampayanGame {
             "Unahin mo yung mga uniporme at makakapal!",
           ];
           const clickQuotesEn = [
-            "Move it, Nak! The clothes will smell musty!",
+            "Move it, son! The clothes will smell musty!",
             "Why are you tapping me? Take care of the clotheslines!",
             "Don't just daydream, hurry up!",
             "Grab the uniforms and thick clothes first!",
