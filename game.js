@@ -24,7 +24,7 @@ class SampayanGame {
 
     // Basket (Batya / Planggana) & Hitbox
     this.BASKET = { x: 9.8, y: 5.2, r: 0.95, h: 1 };
-    this.DROP_PX = 65; // Generous magnetic drop hitbox
+    this.DROP_PX = Math.round(65 * (this.renderer.scale / 12.8)); // Generous magnetic drop hitbox scaled with zoom
     this.CARRY_Z = 1.7;
 
     // Game Pacing & Weather Timeline (seconds)
@@ -57,16 +57,16 @@ class SampayanGame {
     this.POT = [178, 92, 58];
     this.LEAF = [72, 128, 58];
 
-    // Detailed Filipino Laundry Items
+    // Detailed Filipino Laundry Items (with authentic weight & clothespin attributes)
     this.KINDS = {
-      floral_blanket: { w: 3.1, h: 2.3, value: 5, speed: 28.0, name: 'Floral Kumot' },
-      school_uniform: { w: 1.85, h: 2.2, value: 4, speed: 34.0, name: 'School Uniform' },
-      daster: { w: 1.9, h: 2.25, value: 4, speed: 32.0, name: "Nanay's Daster" },
-      maong: { w: 1.3, h: 2.2, value: 3, speed: 35.0, name: 'Maong Pants' },
-      basketball_jersey: { w: 1.6, h: 1.8, value: 3, speed: 40.0, name: 'Barangay Jersey' },
-      sando: { w: 1.4, h: 1.7, value: 2, speed: 44.0, name: "Tatay's Sando" },
-      short_pambahay: { w: 1.35, h: 1.25, value: 2, speed: 46.0, name: 'Pambahay Shorts' },
-      bimpo: { w: 1.05, h: 1.35, value: 1, speed: 56.0, name: 'Good Morning Bimpo' },
+      floral_blanket: { w: 3.1, h: 2.3, value: 5, speed: 22.0, name: 'Floral Kumot', weight: 'heavy', pins: 2 },
+      school_uniform: { w: 1.85, h: 2.2, value: 4, speed: 32.0, name: 'School Uniform', weight: 'medium', pins: 2 },
+      daster: { w: 1.9, h: 2.25, value: 4, speed: 30.0, name: "Nanay's Daster", weight: 'medium', pins: 2 },
+      maong: { w: 1.3, h: 2.2, value: 3, speed: 25.0, name: 'Maong Pants', weight: 'heavy', pins: 2 },
+      basketball_jersey: { w: 1.6, h: 1.8, value: 3, speed: 38.0, name: 'Barangay Jersey', weight: 'medium', pins: 1 },
+      sando: { w: 1.4, h: 1.7, value: 2, speed: 44.0, name: "Tatay's Sando", weight: 'light', pins: 1 },
+      short_pambahay: { w: 1.35, h: 1.25, value: 2, speed: 46.0, name: 'Pambahay Shorts', weight: 'light', pins: 1 },
+      bimpo: { w: 1.05, h: 1.35, value: 1, speed: 56.0, name: 'Good Morning Bimpo', weight: 'light', pins: 1 },
     };
 
     // Colorful plastic clothespins (sipit)
@@ -85,37 +85,37 @@ class SampayanGame {
       ['school_uniform', 'sando', 'daster', 'maong', 'basketball_jersey', 'bimpo', 'short_pambahay'],
     ];
 
-    // 3-Round Escalating Arcade Campaign Configurations
+    // 3-Round Escalating Arcade Campaign Configurations (Tightened high-stakes pacing)
     this.ROUNDS = [
       {
         id: 1,
-        stormFrom: 10,
-        stormTo: 28,
-        rainFrom: 28,
-        rainTo: 36,
-        gameLength: 48,
-        gustMin: 7,
-        gustMax: 11,
+        stormFrom: 8,
+        stormTo: 18,
+        rainFrom: 18,
+        rainTo: 26,
+        gameLength: 36,
+        gustMin: 5,
+        gustMax: 8,
       },
       {
         id: 2,
-        stormFrom: 6,
-        stormTo: 18,
-        rainFrom: 20,
-        rainTo: 28,
-        gameLength: 38,
-        gustMin: 3.5,
-        gustMax: 6,
+        stormFrom: 4,
+        stormTo: 14,
+        rainFrom: 14,
+        rainTo: 22,
+        gameLength: 30,
+        gustMin: 3,
+        gustMax: 5.5,
       },
       {
         id: 3,
         stormFrom: 2,
-        stormTo: 10,
-        rainFrom: 12,
-        rainTo: 20,
-        gameLength: 30,
-        gustMin: 2.2,
-        gustMax: 4,
+        stormTo: 8,
+        rainFrom: 10,
+        rainTo: 18,
+        gameLength: 25,
+        gustMin: 1.8,
+        gustMax: 3.5,
       },
     ];
 
@@ -148,6 +148,7 @@ class SampayanGame {
     this.basketBounce = 0;
     this.screenShake = 0;
     this.nanaySpeech = null;
+    this.nanayPokeTimer = 0;
     this.rainWarned = false;
     this.floaters = [];
     this.round = 1;
@@ -165,6 +166,55 @@ class SampayanGame {
     this.paused = false;
     this.confirmingQuit = false;
     this.currentLang = options.lang || 'en';
+
+    // Rooftop Chaos Twists State
+    this.pointerHistory = [];
+    this.heldItems = []; // Multi-salba support
+    this.swishScores = 0; // Number of Shoot sa Batya swish tosses
+    this.utosCount = 0; // Number of completed Urgent Utos
+
+    // Tsinelas Threat Meter (0 to 100)
+    this.tsinelasMeter = 0;
+    this.tsinelasRage = false;
+    this.tsinelasShake = 0;
+
+    // Munin the Rooftop Puspin Cat Hazard
+    this.cat = {
+      active: false,
+      state: 'inactive', // 'inactive', 'parapet_walk', 'stalk', 'jump_line', 'knead_nap', 'flee'
+      x: -11,
+      y: 5.8,
+      z: 0.6,
+      vx: 0,
+      vy: 0,
+      targetItem: null,
+      targetLine: 1,
+      cooldown: 5.5,
+      timer: 0,
+      animTime: 0,
+      facing: 1,
+      napTimer: 0,
+    };
+
+    // Usok ng Ihaw-Ihaw (Mang Boy's BBQ Smoke Hazard)
+    this.smokeEvent = {
+      active: false,
+      timer: 0,
+      duration: 8.5,
+      lineIdx: 1,
+      nextSmokeIn: 11.0,
+      particles: [],
+    };
+
+    // Nanay's "Urgent Utos" Dynamic Timed Bounties
+    this.utos = {
+      active: false,
+      targetItemId: null,
+      timer: 0,
+      maxTimer: 6.0,
+      cooldown: 6.5,
+      completed: false,
+    };
 
     // Buffers
     this.itemBuf = new Uint16Array(this.renderer.width * this.renderer.height);
@@ -192,6 +242,8 @@ class SampayanGame {
     this.onRoundChange = options.onRoundChange || (() => {});
     this.onPauseChange = options.onPauseChange || (() => {});
     this.onQuitConfirmChange = options.onQuitConfirmChange || (() => {});
+    this.onTsinelasChange = options.onTsinelasChange || (() => {});
+    this.onUtosChange = options.onUtosChange || (() => {});
 
     // Bind event handlers
     this.bindEvents();
@@ -230,6 +282,7 @@ class SampayanGame {
     this.basketBounce = 0;
     this.screenShake = 0;
     this.nanaySpeech = null;
+    this.nanayPokeTimer = 0;
     this.rainWarned = false;
     this.floaters.length = 0;
     this.round = 1;
@@ -245,6 +298,45 @@ class SampayanGame {
     this.pointerDownTime = 0;
     this.paused = false;
     this.confirmingQuit = false;
+    this.pointerHistory = [];
+    this.heldItems = [];
+    this.swishScores = 0;
+    this.utosCount = 0;
+    this.tsinelasMeter = 0;
+    this.tsinelasRage = false;
+    this.tsinelasShake = 0;
+    this.cat = {
+      active: false,
+      state: 'inactive',
+      x: -11,
+      y: 5.8,
+      z: 0.6,
+      vx: 0,
+      vy: 0,
+      targetItem: null,
+      targetLine: 1,
+      cooldown: 5.5,
+      timer: 0,
+      animTime: 0,
+      facing: 1,
+      napTimer: 0,
+    };
+    this.smokeEvent = {
+      active: false,
+      timer: 0,
+      duration: 8.5,
+      lineIdx: 1,
+      nextSmokeIn: 11.0,
+      particles: [],
+    };
+    this.utos = {
+      active: false,
+      targetItemId: null,
+      timer: 0,
+      maxTimer: 6.0,
+      cooldown: 6.5,
+      completed: false,
+    };
     if (this.renderer.canvas) this.renderer.canvas.style.transform = '';
 
     this.audio.silence();
@@ -252,6 +344,8 @@ class SampayanGame {
     this.onScoreChange(0);
     this.onComboChange(1, 1);
     this.onRoundChange(1, this.maxRounds);
+    this.onTsinelasChange(0, false);
+    this.onUtosChange(null);
     this.onPauseChange(false);
     if (this.onQuitConfirmChange) this.onQuitConfirmChange(false);
     this.onPhaseChange('title');
@@ -650,6 +744,11 @@ class SampayanGame {
           accent: palette.accent,
           sipitColor: this.SIPIT_COLORS[Math.floor(Math.random() * this.SIPIT_COLORS.length)],
           isGolden: false,
+          totalPins: spec.pins || 1,
+          pinsRemaining: spec.pins || 1,
+          weight: spec.weight || 'medium',
+          soiled: null,
+          smokeExposure: 0,
         });
         x += spec.w + gap;
       }
@@ -813,12 +912,26 @@ class SampayanGame {
       }
     }
 
+    if (item.soiled === 'smoke') {
+      rgbColor = [
+        Math.round(rgbColor[0] * 0.45 + 32),
+        Math.round(rgbColor[1] * 0.45 + 28),
+        Math.round(rgbColor[2] * 0.45 + 24),
+      ];
+    } else if (item.soiled === 'paw') {
+      rgbColor = [
+        Math.round(rgbColor[0] * 0.65 + 40),
+        Math.round(rgbColor[1] * 0.55 + 26),
+        Math.round(rgbColor[2] * 0.45 + 16),
+      ];
+    }
+
     return this.renderer.rampOf(rgbColor)[level];
   }
 
   drawCloth(item, t) {
     const pinned = item.state === 'line' || item.state === 'loose';
-    const flying = item.state === 'flying' || item.state === 'falling';
+    const flying = item.state === 'flying' || item.state === 'falling' || item.state === 'tossed';
     const flat = item.state === 'ground';
     const gusty = 1 + this.stormLevel() * 0.9 + this.gustGlow * 1.2;
     const amp = item.state === 'loose' ? 0.55 : flying || item.state === 'held' ? 0.4 : 0.12 * gusty;
@@ -854,9 +967,11 @@ class SampayanGame {
     }
 
     if (pinned) {
-      const n = item.kind === 'bimpo' || item.kind === 'sando' ? 2 : (item.kind === 'floral_blanket' ? 3 : 2);
-      for (let k = 0; k < n; k++) {
-        const a = n === 1 ? 0 : (k / (n - 1) - 0.5) * item.w * 0.82;
+      const total = item.totalPins || (item.kind === 'bimpo' || item.kind === 'sando' ? 1 : 2);
+      const remaining = item.pinsRemaining != null ? item.pinsRemaining : total;
+      for (let k = 0; k < total; k++) {
+        if (remaining < total && k === 0) continue; // One pin already removed
+        const a = total === 1 ? 0 : (k / (total - 1) - 0.5) * item.w * 0.82;
         let sipit;
         if (item.isGolden) {
           const glow = (Math.sin(this.time * 9 + k * 1.5) + 1) * 0.5;
@@ -1074,6 +1189,8 @@ class SampayanGame {
 
     this.t = 0;
     this.held = null;
+    this.heldItems = [];
+    this.pointerHistory = [];
     this.auto = false;
     this.pointer = null;
     this.pointerDownPos = null;
@@ -1087,6 +1204,41 @@ class SampayanGame {
     this.bolt = null;
     this.boltIn = roundNum === 3 ? 7 : (roundNum === 2 ? 14 : 22);
 
+    // Reset hazards for new round
+    this.cat = {
+      active: false,
+      state: 'inactive',
+      x: -11,
+      y: 5.8,
+      z: 0.6,
+      vx: 0,
+      vy: 0,
+      targetItem: null,
+      targetLine: 1,
+      cooldown: 5.0 + Math.random() * 3,
+      timer: 0,
+      animTime: 0,
+      facing: 1,
+      napTimer: 0,
+    };
+    this.smokeEvent = {
+      active: false,
+      timer: 0,
+      duration: 8.5,
+      lineIdx: 1,
+      nextSmokeIn: 10.0 + Math.random() * 4,
+      particles: [],
+    };
+    this.utos = {
+      active: false,
+      targetItemId: null,
+      timer: 0,
+      maxTimer: 6.0,
+      cooldown: 6.0 + Math.random() * 3,
+      completed: false,
+    };
+    if (this.onUtosChange) this.onUtosChange(null);
+
     this.hangWashing();
     this.showRoundBanner(roundNum, false);
     this.onRoundChange(roundNum, this.maxRounds);
@@ -1099,6 +1251,13 @@ class SampayanGame {
     this.confirmingQuit = false;
     this.score = 0;
     this.held = null;
+    this.heldItems = [];
+    this.pointerHistory = [];
+    this.swishScores = 0;
+    this.utosCount = 0;
+    this.tsinelasMeter = 0;
+    this.tsinelasRage = false;
+    this.tsinelasShake = 0;
     this.auto = false;
     this.pointer = null;
     this.pointerDownPos = null;
@@ -1125,6 +1284,7 @@ class SampayanGame {
     this.audio.startBgm();
     this.onScoreChange(0);
     this.onComboChange(1, 1);
+    this.onTsinelasChange(0, false);
     this.onPauseChange(false);
     if (this.onQuitConfirmChange) this.onQuitConfirmChange(false);
     this.onPhaseChange('play');
@@ -1225,11 +1385,22 @@ class SampayanGame {
       this.screenShake = 0.35;
     }
 
-    // Score calculation with combo multiplier
-    const basePoints = Math.round(item.value * (1 - item.wet * 0.7) * 10) / 10;
+    // Score calculation with combo multiplier & soiled penalty
+    const soilMultiplier = item.soiled ? 0.5 : 1.0;
+    const basePoints = Math.round(item.value * (1 - item.wet * 0.7) * soilMultiplier * 10) / 10;
     const mult = this.combo;
     const pointsGained = Math.round(basePoints * mult * 10) / 10;
     this.score = Math.round((this.score + pointsGained) * 10) / 10;
+
+    // Clean dry clothes appease Nanay
+    if (item.wet < 0.25 && !item.soiled) {
+      this.adjustTsinelasMeter(-3);
+    }
+
+    // Check Urgent Utos completion
+    if (this.utos && this.utos.active && (item.id === this.utos.targetItemId || item === this.utos.item)) {
+      this.completeUtos(item);
+    }
 
     this.audio.playSfx('drop', this.combo);
     this.onScoreChange(this.score);
@@ -1240,15 +1411,19 @@ class SampayanGame {
     const sx = p.sx + (Math.random() - 0.5) * 8;
     const sy = p.sy + 10;
 
+    let floaterMsg = `+${pointsGained}`;
+    if (item.soiled) {
+      floaterMsg += this.currentLang === 'tl' ? ' (MADUMI)' : ' (SOILED)';
+    }
     if (this.combo > 1) {
       let col = '#00d8ff';
       if (this.combo === 3) col = '#ffd700';
       else if (this.combo === 4) col = '#ff9800';
       else if (this.combo >= 5) col = '#ff2a6d';
 
-      this.addFloater(`+${pointsGained} x${this.combo}!`, sx, sy, col, 6);
+      this.addFloater(`${floaterMsg} x${this.combo}!`, sx, sy, col, 6);
     } else {
-      this.addFloater(`+${pointsGained}`, sx, sy, '#fffefb', 6);
+      this.addFloater(floaterMsg, sx, sy, item.soiled ? '#f87171' : '#fffefb', 6);
     }
 
     // Live Nanay speech reaction on high combo
@@ -1260,6 +1435,13 @@ class SampayanGame {
 
     const saved = this.items.filter(i => i.state === 'basket').length;
     this.onItemCountChange(saved, this.items.length);
+
+    // Multi-Salba cascade banking
+    if (this.heldItems && this.heldItems.length > 0) {
+      const remainingItems = this.heldItems.slice();
+      this.heldItems = [];
+      remainingItems.forEach(extra => this.bank(extra));
+    }
   }
 
   gust() {
@@ -1347,11 +1529,25 @@ class SampayanGame {
   }
 
   grab(item, auto = false) {
+    // Double Clothespin (Sipit) Friction for heavy garments on the line
+    if (item.state === 'line' && item.pinsRemaining > 1 && !auto) {
+      item.pinsRemaining--;
+      this.audio.playSfx('unpin');
+      item.rot = (Math.random() - 0.5) * 0.22;
+      const p = this.renderer.project(item.x, item.y, item.z);
+      this.addFloater(
+        this.currentLang === 'tl' ? 'SNAP! 1 SIPIT PA!' : 'SNAP! 1 PIN LEFT!',
+        p.sx, p.sy - 12, '#ffd700', 6
+      );
+      return;
+    }
+
+    item.pinsRemaining = 0;
     this.held = item;
     this.auto = auto;
 
     // Mid-air "Air Rescue" Snatch Bonus ("Salag sa Hangin")
-    if (item.state === 'flying' || (item.state === 'falling' && item.wasBlown)) {
+    if (item.state === 'flying' || (item.state === 'falling' && item.wasBlown) || item.state === 'tossed') {
       this.airRescues++;
       item.wasBlown = false;
       const bonus = 10;
@@ -1396,14 +1592,54 @@ class SampayanGame {
   letGo() {
     const item = this.held;
     if (!item) return;
+    const itemsToRelease = [item, ...(this.heldItems || [])];
     this.held = null;
+    this.heldItems = [];
     this.pointerDownPos = null;
     this.pointerDownTime = 0;
+
     if (this.overBasket(item)) {
-      this.bank(item);
+      itemsToRelease.forEach(it => this.bank(it));
+      return;
+    }
+
+    // Velocity calculation from recent pointerHistory (last ~120ms)
+    let vx = 0, vy = 0;
+    const now = performance.now();
+    const recent = (this.pointerHistory || []).filter(h => now - h.t < 130);
+    this.pointerHistory = [];
+    if (recent.length >= 2) {
+      const first = recent[0];
+      const last = recent[recent.length - 1];
+      const dtMs = (last.t - first.t) / 1000;
+      if (dtMs > 0.015) {
+        vx = (last.x - first.x) / dtMs;
+        vy = (last.y - first.y) / dtMs;
+      }
+    }
+    const speed = Math.hypot(vx, vy);
+
+    if (speed > 220) {
+      // 2.5D Ballistic Arcade Toss ("Shoot sa Batya!")
+      this.audio.playSfx('toss');
+      itemsToRelease.forEach((it, idx) => {
+        const spreadX = (idx - (itemsToRelease.length - 1) / 2) * 10;
+        it.state = 'tossed';
+        const worldScale = this.renderer.scale;
+        const dirX = (vx + spreadX) / worldScale;
+        const dirY = (vy * Math.cos(this.renderer.pitch)) / (worldScale * this.renderer.sin);
+        it.vx = dirX * 1.15;
+        it.vy = dirY * 1.15;
+        it.vz = Math.max(1.8, Math.min(6.5, speed * 0.009 - (vy < 0 ? vy * 0.006 : 0)));
+        it.spin = (Math.random() - 0.5) * 8 + (vx > 0 ? 3.5 : -3.5);
+        it.startTossPos = { x: it.x, y: it.y };
+        it.wasTossed = true;
+      });
     } else {
-      item.state = 'falling';
-      item.vz = 0;
+      itemsToRelease.forEach(it => {
+        it.state = 'falling';
+        it.vz = 0;
+      });
     }
   }
 
@@ -1501,16 +1737,20 @@ class SampayanGame {
     if (this.screenShake > 0) {
       this.screenShake = Math.max(0, this.screenShake - dt * 3.5);
       const mag = this.screenShake * 5.0;
-      if (this.renderer.canvas) {
+      if (this.renderer.canvas && this.renderer.canvas.style) {
         this.renderer.canvas.style.transform = (mag > 0.08) ? `translate(${(Math.random()-0.5)*mag}px, ${(Math.random()-0.5)*mag}px)` : '';
       }
-    } else if (this.renderer.canvas && this.renderer.canvas.style.transform) {
+    } else if (this.renderer.canvas && this.renderer.canvas.style && this.renderer.canvas.style.transform) {
       this.renderer.canvas.style.transform = '';
     }
 
     if (this.nanaySpeech) {
       this.nanaySpeech.timer -= dt;
       if (this.nanaySpeech.timer <= 0) this.nanaySpeech = null;
+    }
+    if (this.nanayPokeTimer > 0) {
+      this.nanayPokeTimer -= dt;
+      if (this.nanayPokeTimer < 0) this.nanayPokeTimer = 0;
     }
     if (this.roundBanner) {
       const prevStep = this.getCountdownStep();
@@ -1683,6 +1923,7 @@ class SampayanGame {
           item.wasBlown = false;
           item.rot = 0;
           item.vz = 0;
+          this.adjustTsinelasMeter(+5);
           // Live Nanay reaction to dropped clothing
           if (!this.nanaySpeech || this.nanaySpeech.timer < 0.5) {
             const dropQuotesTl = [
@@ -1697,6 +1938,68 @@ class SampayanGame {
             this.setNanaySpeech(dropQuotesTl[dIdx], dropQuotesEn[dIdx], 2.2, 'scold');
           }
         }
+      } else if (item.state === 'tossed') {
+        item.x += item.vx * dt;
+        item.y += item.vy * dt;
+        item.z += item.vz * dt;
+        item.vz -= 12.5 * dt; // 2.5D rooftop gravity
+        item.rot += item.spin * dt;
+        item.vx *= (1 - dt * 0.35);
+        item.vy *= (1 - dt * 0.35);
+
+        // Check if entered the Batya (Shoot sa Batya / Swish)
+        const dx = item.x - this.BASKET.x;
+        const dy = item.y - this.BASKET.y;
+        const dist = Math.hypot(dx, dy);
+        const inCylinder = dist < this.BASKET.r * 1.35;
+        const inHeight = item.z <= this.BASKET.h + 0.9 && item.z >= this.BASKET.h - 0.5;
+
+        if (inCylinder && inHeight) {
+          const tossDist = item.startTossPos ? Math.hypot(item.startTossPos.x - this.BASKET.x, item.startTossPos.y - this.BASKET.y) : 0;
+          this.bank(item);
+          if (tossDist > 2.8) {
+            this.swishScores = (this.swishScores || 0) + 1;
+            const swishBonus = 15;
+            this.score = Math.round((this.score + swishBonus) * 10) / 10;
+            this.onScoreChange(this.score);
+            this.audio.playSfx('swish');
+            this.screenShake = 0.35;
+            const p = this.renderer.project(this.BASKET.x, this.BASKET.y, this.BASKET.h + 0.6);
+            this.addFloater(
+              this.currentLang === 'tl' ? '+15 SWISH! SHOOT!' : '+15 SWISH! BUCKET!',
+              p.sx, p.sy - 12, '#ffd700', 8
+            );
+            const swishQuotesTl = [
+              'SHOOT! Parang si Justin Brownlee!',
+              'Aba, tres puntos sa batya! Galing!',
+              'Shoot na shoot! Walang mintis, Nak!'
+            ];
+            const swishQuotesEn = [
+              'SWISH! Like Justin Brownlee in the PBA!',
+              'Three points into the tub! Great shot!',
+              'Nothing but net, son! What a shot!'
+            ];
+            const sqIdx = Math.floor(Math.random() * swishQuotesTl.length);
+            this.setNanaySpeech(swishQuotesTl[sqIdx], swishQuotesEn[sqIdx], 2.4, 'cheer');
+            this.adjustTsinelasMeter(-12);
+          }
+        } else if (item.z <= 0.6) {
+          item.state = 'ground';
+          item.z = 0.6;
+          item.vz = 0;
+          item.rot = 0;
+          this.adjustTsinelasMeter(+5);
+          if (!this.nanaySpeech || this.nanaySpeech.timer < 0.4) {
+            this.setNanaySpeech(
+              "Ay sumablay! Dumapa sa semento!",
+              "Missed the basket! It fell on the cement!",
+              2.0, 'scold'
+            );
+          }
+        } else if (Math.abs(item.x) > this.ROOF_X + 1.2 || Math.abs(item.y) > this.ROOF_Y + 1.2) {
+          item.state = 'lost';
+          this.adjustTsinelasMeter(+20);
+        }
       } else if (item.state === 'held') {
         const target = this.auto ? { x: this.BASKET.x, y: this.BASKET.y } : this.pointerWorld();
         const dx = target.x - item.x, dy = target.y - item.y, d = Math.hypot(dx, dy);
@@ -1709,8 +2012,9 @@ class SampayanGame {
             item.y += dy / d * move;
           }
         } else {
-          // Snappy, ultra-responsive 1:1 cursor drag
-          const follow = Math.min(1, dt * 75);
+          // Snappy, ultra-responsive cursor drag (with slight garment weight inertia)
+          const followRate = item.weight === 'heavy' ? 55 : (item.weight === 'light' ? 85 : 75);
+          const follow = Math.min(1, dt * followRate);
           item.x += dx * follow;
           item.y += dy * follow;
         }
@@ -1718,6 +2022,16 @@ class SampayanGame {
         item.vx = (item.x - px) / Math.max(dt, 0.001);
         item.z += (this.CARRY_Z + item.h / 2 - item.z) * Math.min(1, dt * 14);
         item.rot *= 0.8;
+
+        if (this.heldItems && this.heldItems.length > 0) {
+          this.heldItems.forEach((extra, idx) => {
+            extra.x = item.x + (idx + 1) * 0.25;
+            extra.y = item.y;
+            extra.z = item.z;
+            extra.vx = item.vx;
+            extra.rot = item.rot;
+          });
+        }
 
         if (this.auto && this.overBasket(item)) {
           this.held = null;
@@ -1727,7 +2041,412 @@ class SampayanGame {
       }
     }
 
+    if (this.phase === 'play') {
+      if (this.tsinelasShake > 0) {
+        this.tsinelasShake = Math.max(0, this.tsinelasShake - dt * 2.5);
+      }
+      this.updateCat(dt);
+      this.updateSmoke(dt);
+      this.updateUtos(dt);
+    }
+
     this.updateRain(dt, rain);
+  }
+
+  /* ---------- Rooftop Chaos Hazard Logic (Munin, Smoke, Utos, Tsinelas) ---------- */
+  adjustTsinelasMeter(amount) {
+    this.tsinelasMeter = Math.max(0, Math.min(100, (this.tsinelasMeter || 0) + amount));
+    if (amount > 0) {
+      this.tsinelasShake = 0.45;
+      if (this.tsinelasMeter >= 100 && !this.tsinelasRage) {
+        this.tsinelasRage = true;
+        this.audio.playSfx('tsinelas');
+        this.screenShake = 0.5;
+        this.setNanaySpeech(
+          "HUMANDA KA SA TSINELAS! Napuno mo na 'ko!",
+          "WATCH OUT FOR THE SLIPPER! You've pushed me too far!",
+          3.0, 'scold'
+        );
+        this.addFloater(
+          this.currentLang === 'tl' ? 'HUMANDA SA TSINELAS! 🩴' : 'SLIPPER INCOMING! 🩴',
+          this.renderer.width / 2, 60, '#ce1126', 8
+        );
+      }
+    }
+    if (this.onTsinelasChange) {
+      this.onTsinelasChange(this.tsinelasMeter, this.tsinelasRage);
+    }
+  }
+
+  updateCat(dt) {
+    if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
+    const cat = this.cat;
+    cat.animTime += dt;
+
+    if (cat.state === 'inactive') {
+      cat.cooldown -= dt;
+      if (cat.cooldown <= 0) {
+        cat.active = true;
+        const fromLeft = Math.random() < 0.5;
+        cat.x = fromLeft ? -10.5 : 10.5;
+        cat.y = 5.8;
+        cat.z = 0.6;
+        cat.facing = fromLeft ? 1 : -1;
+        cat.state = 'parapet_walk';
+        cat.timer = 5.0 + Math.random() * 4.0;
+        this.audio.playSfx('meow');
+      }
+      return;
+    }
+
+    if (cat.state === 'parapet_walk') {
+      cat.x += cat.facing * 1.8 * dt;
+      cat.timer -= dt;
+
+      // Detect fallen unsoiled clothes on ground
+      const groundItem = this.items.find(i => i.state === 'ground' && !i.soiled);
+      if (groundItem) {
+        cat.targetItem = groundItem;
+        cat.state = 'stalk';
+        cat.timer = 8.0;
+      } else if (cat.timer <= 0) {
+        if (Math.random() < 0.5) {
+          cat.state = 'jump_line';
+          cat.timer = 3.2;
+          cat.targetLine = Math.floor(Math.random() * 3);
+          this.audio.playSfx('meow');
+        } else {
+          cat.state = 'flee';
+          cat.facing = cat.x > 0 ? 1 : -1;
+        }
+      }
+    } else if (cat.state === 'stalk') {
+      if (!cat.targetItem || cat.targetItem.state !== 'ground') {
+        cat.targetItem = null;
+        cat.state = 'parapet_walk';
+        cat.timer = 3.0;
+        return;
+      }
+      const dx = cat.targetItem.x - cat.x;
+      const dy = cat.targetItem.y - cat.y;
+      const dist = Math.hypot(dx, dy);
+      cat.facing = dx >= 0 ? 1 : -1;
+
+      if (dist > 0.7) {
+        cat.x += (dx / dist) * 2.2 * dt;
+        cat.y += (dy / dist) * 2.2 * dt;
+      } else {
+        cat.state = 'knead_nap';
+        cat.napTimer = 1.8;
+        this.setNanaySpeech(
+          "Hala, si Munin! Lalapitan ang sinampay sa lapag!",
+          "Look out, Munin! He's heading for the fallen laundry!",
+          2.4, 'urgent'
+        );
+      }
+    } else if (cat.state === 'knead_nap') {
+      cat.napTimer -= dt;
+      if (!cat.targetItem || cat.targetItem.state !== 'ground') {
+        cat.state = 'flee';
+        cat.facing = cat.x > 0 ? 1 : -1;
+        return;
+      }
+      if (cat.napTimer <= 0) {
+        cat.targetItem.soiled = 'paw';
+        this.audio.playSfx('meow');
+        this.adjustTsinelasMeter(+15);
+        const p = this.renderer.project(cat.targetItem.x, cat.targetItem.y, 0.6);
+        this.addFloater(this.currentLang === 'tl' ? 'MADUMI! -5' : 'SOILED! -5', p.sx, p.sy - 10, '#ce1126', 6);
+        this.setNanaySpeech(
+          "Jusko! Tinapakan ng pusa ang puti! Munin, tsupe!",
+          "Good grief! The cat stepped on the laundry! Shoo, Munin!",
+          2.6, 'scold'
+        );
+        cat.state = 'flee';
+        cat.facing = cat.x > 0 ? 1 : -1;
+      }
+    } else if (cat.state === 'jump_line') {
+      const lineY = this.LINE_YS[cat.targetLine || 1];
+      cat.y = lineY;
+      cat.z = this.LINE_Z;
+      cat.timer -= dt;
+      // Line shaking causes fluttering
+      for (const item of this.items) {
+        if (item.state === 'line' && Math.abs(item.y - lineY) < 0.6) {
+          item.rot += (Math.random() - 0.5) * 0.16;
+        }
+      }
+      if (cat.timer <= 0) {
+        cat.z = 0.6;
+        cat.y = 5.8;
+        cat.state = 'parapet_walk';
+        cat.timer = 4.0;
+      }
+    } else if (cat.state === 'flee') {
+      cat.x += cat.facing * 5.4 * dt;
+      if (Math.abs(cat.x) > 13.0) {
+        cat.active = false;
+        cat.state = 'inactive';
+        cat.cooldown = 8.0 + Math.random() * 8.0;
+      }
+    }
+  }
+
+  shooCat() {
+    if (!this.cat || !this.cat.active || this.cat.state === 'flee') return;
+    this.audio.playSfx('catHiss');
+    this.cat.state = 'flee';
+    this.cat.facing = this.cat.x >= 0 ? 1 : -1;
+    this.cat.z = 0.6;
+    this.adjustTsinelasMeter(-6);
+    const catProj = this.renderer.project(this.cat.x, this.cat.y, this.cat.z);
+    this.addFloater(this.currentLang === 'tl' ? 'TSUPE! 🐾' : 'SHOO! 🐾', catProj.sx, catProj.sy - 12, '#2ded82', 7);
+    const shooQuotesTl = [
+      'Tsupe, Munin! Huwag mong galawin ang labada!',
+      'Ayan, buti naitaboy mo ang pusang gala!',
+      'Tsupe! Dudumihan na naman ang mga damit!'
+    ];
+    const shooQuotesEn = [
+      'Shoo, Munin! Leave the laundry alone!',
+      'Nice! You chased away the stray cat!',
+      'Shoo! It would have dirtied the clean clothes!'
+    ];
+    const sIdx = Math.floor(Math.random() * shooQuotesTl.length);
+    this.setNanaySpeech(shooQuotesTl[sIdx], shooQuotesEn[sIdx], 2.2, 'cheer');
+  }
+
+  updateSmoke(dt) {
+    if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
+    const smoke = this.smokeEvent;
+
+    if (!smoke.active) {
+      smoke.nextSmokeIn -= dt;
+      if (smoke.nextSmokeIn <= 0) {
+        smoke.active = true;
+        smoke.timer = 8.5;
+        smoke.lineIdx = Math.floor(Math.random() * 3);
+        this.audio.playSfx('sizzle');
+        this.setNanaySpeech(
+          "Hala! Nag-iihaw na naman si Mang Boy! Usok sa sampayan, iligtas ang mga puti!",
+          "Oh no! Mang Boy is grilling BBQ downstairs! Save the white clothes from the smoke!",
+          3.2, 'urgent'
+        );
+        const p = this.renderer.project(0, this.LINE_YS[smoke.lineIdx], this.LINE_Z);
+        this.addFloater(this.currentLang === 'tl' ? 'USOK ALERT! ♨️' : 'SMOKE ALERT! ♨️', p.sx, p.sy - 14, '#f59e0b', 7);
+      }
+      return;
+    }
+
+    smoke.timer -= dt;
+
+    // Spawn smoke particles wafting horizontally
+    if (Math.random() < 0.65) {
+      smoke.particles.push({
+        x: -this.ROOF_X - 1 + Math.random() * 2,
+        y: this.LINE_YS[smoke.lineIdx] + (Math.random() - 0.5) * 1.6,
+        z: this.LINE_Z - 0.5 + Math.random() * 1.5,
+        vx: 3.8 + Math.random() * 2.2,
+        vy: (Math.random() - 0.5) * 0.4,
+        vz: 0.2 + Math.random() * 0.4,
+        r: 0.65 + Math.random() * 0.5,
+        life: 0,
+        maxLife: 3.2,
+        color: Math.random() < 0.25 ? [75, 70, 65] : [135, 130, 125],
+      });
+    }
+
+    // Update particles
+    for (let i = smoke.particles.length - 1; i >= 0; i--) {
+      const sp = smoke.particles[i];
+      sp.life += dt;
+      sp.x += sp.vx * dt;
+      sp.y += sp.vy * dt;
+      sp.z += sp.vz * dt;
+      sp.r += dt * 0.35;
+      if (sp.life >= sp.maxLife) smoke.particles.splice(i, 1);
+    }
+
+    // Check white clothes on that line
+    const targetY = this.LINE_YS[smoke.lineIdx];
+    for (const item of this.items) {
+      if (item.state === 'line' && Math.abs(item.y - targetY) < 0.6) {
+        const isWhite = item.kind === 'school_uniform' || item.kind === 'sando' || item.kind === 'bimpo';
+        if (isWhite && !item.soiled) {
+          item.smokeExposure = (item.smokeExposure || 0) + dt;
+          if (item.smokeExposure >= 4.0) {
+            item.soiled = 'smoke';
+            this.adjustTsinelasMeter(+15);
+            const p = this.renderer.project(item.x, item.y, item.z);
+            this.addFloater(this.currentLang === 'tl' ? 'AMOY USOK! ♨️' : 'SMOKED! ♨️', p.sx, p.sy - 10, '#ce1126', 6);
+            this.setNanaySpeech(
+              "Ayan na nga ba sinasabi ko! Nangamoy uling ang uniporme!",
+              "Just as I warned! The uniform smells like charcoal BBQ!",
+              2.6, 'scold'
+            );
+          }
+        }
+      }
+    }
+
+    if (smoke.timer <= 0) {
+      smoke.active = false;
+      smoke.nextSmokeIn = 16.0 + Math.random() * 10;
+    }
+  }
+
+  updateUtos(dt) {
+    if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
+    const utos = this.utos;
+
+    if (!utos.active) {
+      utos.cooldown -= dt;
+      if (utos.cooldown <= 0) {
+        const candidates = this.items.filter(i => i.state !== 'basket' && i.state !== 'lost');
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => b.value - a.value);
+          const chosen = candidates[Math.floor(Math.random() * Math.min(3, candidates.length))];
+          utos.active = true;
+          utos.targetItemId = chosen.id;
+          utos.item = chosen;
+          utos.kind = chosen.kind;
+          utos.name = chosen.name;
+          utos.timer = 6.0;
+          utos.maxTimer = 6.0;
+          utos.completed = false;
+          this.audio.playSfx('pop');
+
+          let tlLine, enLine;
+          if (chosen.kind === 'school_uniform') {
+            tlLine = "Nak! Yung uniporme mo muna, may pasok ka bukas!";
+            enLine = "Son! Get your school uniform first, you have class tomorrow!";
+          } else if (chosen.kind === 'daster') {
+            tlLine = "Yung daster ko unahin mo, kakalaba ko lang niyan!";
+            enLine = "Get my daster first, I just washed that!";
+          } else if (chosen.kind === 'basketball_jersey') {
+            tlLine = "Yung paboritong jersey ni Tatay, iligtas mo!";
+            enLine = "Save Tatay's favorite jersey first!";
+          } else if (chosen.kind === 'floral_blanket') {
+            tlLine = "Yung kumot! Baka maulanan, ang hirap patuyuin!";
+            enLine = "The floral blanket! If it gets soaked it will take days to dry!";
+          } else {
+            tlLine = `Nak! Unahin mo agad ang ${chosen.name}!`;
+            enLine = `Son! Prioritize the ${chosen.name} right now!`;
+          }
+          this.setNanaySpeech(tlLine, enLine, 3.2, 'urgent');
+          const p = this.renderer.project(chosen.x, chosen.y, chosen.z);
+          this.addFloater(this.currentLang === 'tl' ? 'URGENT UTOS! ⚡' : 'PRIORITY TASK! ⚡', p.sx, p.sy - 14, '#ffd700', 7);
+
+          if (this.onUtosChange) {
+            this.onUtosChange({
+              active: true,
+              name: chosen.kind,
+              itemName: chosen.name,
+              timer: utos.timer,
+              maxTimer: utos.maxTimer
+            });
+          }
+        } else {
+          utos.cooldown = 5.0;
+        }
+      }
+      return;
+    }
+
+    utos.timer -= dt;
+    const target = (utos.targetItemId != null ? this.items.find(i => i.id === utos.targetItemId) : null) || utos.item;
+
+    if (this.onUtosChange) {
+      this.onUtosChange({
+        active: true,
+        name: target ? target.kind : (utos.kind || ''),
+        itemName: target ? target.name : '',
+        timer: Math.max(0, utos.timer),
+        maxTimer: utos.maxTimer
+      });
+    }
+
+    if (!target || target.state === 'lost') {
+      utos.active = false;
+      utos.cooldown = 10.0;
+      this.adjustTsinelasMeter(+20);
+      this.setNanaySpeech(
+        "Naku, nalipad tuloy ang pinapakuha ko!",
+        "Oh no, the clothes I asked for flew away!",
+        2.6, 'scold'
+      );
+      if (this.onUtosChange) this.onUtosChange(null);
+    } else if (target.state === 'basket') {
+      this.completeUtos(target);
+    } else if (utos.timer <= 0) {
+      utos.active = false;
+      utos.cooldown = 10.0;
+      this.adjustTsinelasMeter(+20);
+      this.setNanaySpeech(
+        "Sabi ko unahin mo 'yun eh! Matigas talaga ulo mo!",
+        "I told you to get that one first! You never listen!",
+        2.6, 'scold'
+      );
+      if (this.onUtosChange) this.onUtosChange(null);
+    }
+  }
+
+  completeUtos(target) {
+    if (!this.utos || !this.utos.active) return;
+    this.utos.active = false;
+    this.utos.cooldown = 12.0;
+    this.utosCount = (this.utosCount || 0) + 1;
+    const bountyPoints = Math.round((target.value || 3) * 3 * 10) / 10;
+    this.score = Math.round((this.score + bountyPoints) * 10) / 10;
+    this.combo = 5;
+    this.comboTimer = 2.0;
+    this.onScoreChange(this.score);
+    this.onComboChange(5, 5);
+    this.adjustTsinelasMeter(-15);
+    this.audio.playSfx('rescue');
+    const p = this.renderer.project(this.BASKET.x, this.BASKET.y, this.BASKET.h + 0.5);
+    this.addFloater(
+      this.currentLang === 'tl' ? `+${bountyPoints} MASUNURIN! 3X` : `+${bountyPoints} OBEDIENT! 3X`,
+      p.sx, p.sy - 12, '#ffd700', 8
+    );
+    this.setNanaySpeech(
+      "Napakabait talagang bata! May dagdag baon ka mamaya!",
+      "Such a good child! Extra pocket money for you later!",
+      2.8, 'cheer'
+    );
+    if (this.onUtosChange) this.onUtosChange(null);
+  }
+
+  drawUtosBeacon(targetItem) {
+    const item = targetItem || (this.utos && this.utos.active ? (this.utos.item || (this.utos.targetItemId != null ? this.items.find(i => i.id === this.utos.targetItemId) : null)) : null);
+    if (!item) return;
+    const ctx = this.renderer.ctx;
+    if (!ctx) return;
+    const p = this.renderer.project(item.x, item.y, item.z + 0.3);
+    const pulse = (Math.sin(this.time * 9) + 1) * 0.5;
+    const size = Math.round(item.w * this.renderer.scale * 0.6) + 4;
+
+    ctx.save();
+    // Glowing golden target bracket
+    ctx.strokeStyle = `rgba(245, 184, 0, ${0.7 + pulse * 0.3})`;
+    ctx.lineWidth = 2;
+    const bx = Math.round(p.sx - size / 2);
+    const by = Math.round(p.sy - size / 2);
+    const cornerL = 6;
+    ctx.beginPath(); ctx.moveTo(bx, by + cornerL); ctx.lineTo(bx, by); ctx.lineTo(bx + cornerL, by); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + size - cornerL, by); ctx.lineTo(bx + size, by); ctx.lineTo(bx + size, by + cornerL); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx, by + size - cornerL); ctx.lineTo(bx, by + size); ctx.lineTo(bx + cornerL, by + size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx + size - cornerL, by + size); ctx.lineTo(bx + size, by + size); ctx.lineTo(bx + size, by + size - cornerL); ctx.stroke();
+
+    // Floating pulsing arrow / badge above
+    const arrowY = by - 12 - Math.round(pulse * 4);
+    ctx.font = '6.5px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#181210';
+    ctx.fillText(`⚡${Math.ceil(this.utos.timer)}s⚡`, p.sx + 1, arrowY + 1);
+    ctx.fillStyle = '#f5b800';
+    ctx.fillText(`⚡${Math.ceil(this.utos.timer)}s⚡`, p.sx, arrowY);
+
+    ctx.restore();
   }
 
   endGame() {
@@ -1748,6 +2467,7 @@ class SampayanGame {
       this.held = null;
       this.auto = false;
     }
+    this.heldItems = [];
 
     const currentBanked = this.items.filter(i => i.state === 'basket');
     const currentDry = currentBanked.filter(i => i.wet < 0.25).length;
@@ -1794,6 +2514,13 @@ class SampayanGame {
       this.audio.playSfx('fail');
     }
 
+    // Tsinelas Rage alters commentary if anger meter hit max
+    if (this.tsinelasRage && grade !== 'S') {
+      commentary = this.currentLang === 'tl'
+        ? "HUMANDA KA TALAGA SA TSINELAS! Napuno mo 'ko sa kabagalan mo! Banlawan mo ulit 'yan bago lumipad 'tong spartan!"
+        : "WATCH OUT FOR THE SLIPPER! You tested my patience today! Wash that laundry again before this slipper flies!";
+    }
+
     this.onPhaseChange('over');
     this.onGameOver({
       grade,
@@ -1808,6 +2535,9 @@ class SampayanGame {
       total,
       maxCombo: this.maxCombo,
       airRescues: this.airRescues,
+      swishScores: this.swishScores || 0,
+      utosCount: this.utosCount || 0,
+      tsinelasRage: Boolean(this.tsinelasRage),
       roundsCleared: this.round >= this.maxRounds ? 3 : Math.max(0, this.round - 1),
     });
   }
@@ -1865,93 +2595,187 @@ class SampayanGame {
   initNanayPortraits() {
     if (typeof document === 'undefined') return;
     const NANAY_PAL = {
-      '#': '#1c1b19', // dark outline
-      'h': '#2b2320', // dark hair
-      'p': '#f85c8e', // pink scrunchie & daster ribbon/flower
-      's': '#e6a67a', // filipino morena skin
-      'e': '#1c1b19', // eyes
-      'm': '#b04040', // smile / lips / tongue
-      't': '#0e8fa9', // vibrant teal/turquoise daster
-      'f': '#ffffff', // flower petal white
-      'w': '#ffffff', // teeth / highlight
-      'g': '#ffd700', // golden shine / flower stamen
+      '#': '#181210', // crisp dark ink outline
+      'h': '#281a14', // deep dark brown hair base
+      'H': '#462e24', // hair midtone
+      'x': '#6e4c3d', // hair sheen / highlight wisp
+      'p': '#f43f5e', // coral pink hairclip / floral accent
+      'P': '#fb7185', // clip highlight
+      's': '#e29a65', // authentic warm Filipino Morena skin base
+      'S': '#f4be92', // skin light highlight (forehead/nose)
+      'd': '#bf7442', // skin contour & shadow
+      'D': '#854620', // deep jaw / neck shadow
+      'b': '#f472b6', // rosy cheek blush
+      'B': '#fda4af', // soft blush highlight
+      'e': '#181210', // eye pupil / lash line
+      'w': '#ffffff', // eye catchlight / white / teeth
+      'm': '#9f1239', // deep rose lips border / shadow
+      'M': '#e11d48', // vibrant lips
+      'u': '#fb7185', // tongue pink
+      'g': '#f59e0b', // gold earring / flower stamen
+      'G': '#fde047', // gold earring glint highlight
+      't': '#0d9488', // daster teal base
+      'T': '#14b8a6', // daster bright teal highlight
+      'c': '#0f766e', // daster dark shadow
+      'y': '#fbbf24', // daster floral yellow petal
+      'k': '#fef3c7', // sweetheart collar cream
+      'r': '#dc2626', // bimpo towel red stripe
+      'o': '#f8fafc', // bimpo towel clean white
+      'O': '#cbd5e1', // bimpo towel shadow fold
+      'q': '#0284c7', // sweat drop blue
+      'Q': '#bae6fd', // sweat drop highlight
     };
 
     const BASE_GRID = [
-      "................................",
-      "............########............",
-      "...........#hhhhhhhh#...........",
-      "..........#hhhhhhhhhh#..........",
-      "..........#hhh#pp#hhh#..........",
-      "...........#hh#pp#hh#...........",
-      "..........##hh####hh##..........",
-      ".........#ssssssssssss#.........",
-      "........#ssssssssssssss#........",
-      "........#ssssssssssssss#........",
-      ".......#ss#ee#ssss#ee#ss#.......",
-      ".......#ss#ee#ssss#ee#ss#.......",
-      ".......#ssssssssssssssss#.......",
-      "........#ssssssmmssssss#........",
-      "........#ssssssssssssss#........",
-      ".........#ssssssssssss#.........",
-      "..........#ssssssssss#..........",
-      "...........###ssss###...........",
-      "........#####tt..tt#####........",
-      ".......#ppptt......tttpp#.......",
-      "......#ppptttttttttttttpp#......",
-      ".....#ppppttttgtttttgtttpp#.....",
-      ".....#ttttfpftttttfpfttttt#.....",
-      ".....#ttttfpftttttfpfttttt#.....",
-      ".....#tttttttttgtttttttttt#.....",
-      ".....#tttttttfpftttttttttt#.....",
-      ".....#ttgttttfpftttttgtttt#.....",
-      ".....#tfpfttttttttttfpfttt#.....",
-      "......#tttttttttttttttttt#......",
-      ".......#tttttttttttttttt#.......",
-      "........################........",
-      "................................"
+      "............########............", // 0: Top bun top edge
+      "...........##hHHHHh##...........", // 1: Bun volume
+      "..........#hHxxxxxxHh#..........", // 2: Bun sheen highlight
+      "..........#hHxxxxxxHh#..........", // 3: Bun sheen
+      "..........#hHHHHHHHHh#..........", // 4: Bun lower
+      "...........#h#pPPp#h#...........", // 5: Pink floral scrunchie
+      ".........####ppgGgpp####........", // 6: Gold flower stamen buckle
+      "........#hhhhh####hhhhh#........", // 7: Crown of hair
+      ".......#hHHHHhhhhhhHHHHh#.......", // 8: Hair volume
+      "......#hHxxxxHHHHHHxxxxHh#......", // 9: Hair sheen wisps
+      ".....#hHHhsssssssssssshHHh#.....", // 10: Hairline with soft side bangs
+      ".....#hhssSSssssssssSSsshh#.....", // 11: Forehead with soft highlight
+      ".....#hs##ee#ssssss#ee##sh#.....", // 12: Arched natural eyebrows
+      ".....#h#weee#ssssss#weee#h#.....", // 13: Expressive eyes with catchlights
+      ".....#h#weee#ssssss#weee#h#.....", // 14: Luminous pupils
+      "....#GgssssbbssssssbbssssgG#....", // 15: Gold hoop earrings & blush cheeks
+      "....#g#dssssssssssssssssd#g#....", // 16: Earring bottom & soft cheek shadow
+      ".....#dsssssssSddSsssssssd#.....", // 17: Defined cute nose tip
+      "......#dssssssssssssssssd#......", // 18: Philtrum / upper lip contour
+      "......#ddssssssmmssssssdd#......", // 19: Warm maternal smile
+      ".......#dsssssmMMmsssssd#.......", // 20: Curved lower lip
+      "........#DDssssssssssDD#........", // 21: Rounded defined chin
+      ".........##DDddddddDD##.........", // 22: Chin shadow separating neck
+      ".......##kkkkDssssDkkkk##.......", // 23: Cream sweetheart ruffled collar
+      "......#kktctk######ktctkk#......", // 24: Sweetheart collar shape
+      ".....#ootcttttttttttttcttk#.....", // 25: Bimpo towel draped on left shoulder
+      "....#oootrctyttttttttyttcttk#...", // 26: Towel white/red stripe & floral daster
+      "...#oootrcttppttttttpptttcttt#..", // 27: Towel fold & pink floral print
+      "..#OOotrctttttttttttttttttcttt#.", // 28: Towel drape & daster body
+      "..#OOOtrctttttttttttttttttcttt#.", // 29: Towel shadow & daster drape
+      "..#OO######################OO#..", // 30: Bottom frame edge
+      "...##......................##..."  // 31
     ];
 
-    const getMoodGrid = (mood, talking = false) => {
+    const getMoodGrid = (mood, stage = 'default') => {
       const g = [...BASE_GRID];
-      if (mood === 'urgent' || mood === 'scold') {
-        g[10] = "......#ss#eeee#ss#eeee#ss#......";
-        g[11] = "......#ss#eeee#ss#eeee#ss#......";
-        if (talking) {
-          g[13] = "........#sssss####sssss#........";
-          g[14] = "........#sssss#ww#sssss#........";
-          g[15] = ".........#ssss#mm#ssss#.........";
-          g[16] = "..........#sss####sss#..........";
+
+      if (mood === 'urgent') {
+        // Alarmed, worried eyes glancing up/right, sweat at temple
+        g[10] = ".....#hHHhssssssssssqQhHHh#....."; // Sweat drop at hairline
+        g[11] = ".....#hh#e#SSssssssqQ#e#hh#....."; // Raised worried eyebrows
+        g[12] = ".....#hsS#ee#ssssss#ee#Ssh#....."; // Inner brows raised in worry
+        g[13] = ".....#h##eee#ssssss#eee##h#....."; // Wide alarmed eyes
+        g[14] = ".....#h#weee#ssssss#weee#h#.....";
+
+        if (stage === 'talk1') {
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#MMMM#ssssd#.......";
+          g[21] = "........#DDsss####sssDD#........";
+        } else if (stage === 'talk2') {
+          g[19] = "......#ddssss######ssssdd#......";
+          g[20] = ".......#dsss#wwwwww#sssd#.......";
+          g[21] = "........#DDs#MMMMMM#sDD#........";
         } else {
-          g[13] = "........#sssssmmmmsssss#........";
-          g[14] = "........#ssssssssssssss#........";
+          // Default urgent: parted lips gasping
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#MMMM#ssssd#.......";
+          g[21] = "........#DDsss####sssDD#........";
+        }
+      } else if (mood === 'scold') {
+        // Stern, fiercely caring motherly scold: sharp angled brows, determined mouth
+        g[11] = ".....#hh#ee#ssssssss#ee#hh#....."; // Lowered stern brow angle
+        g[12] = ".....#hsS#ee#ssssss#ee#Ssh#....."; // Angled fierce brows
+        g[13] = ".....#h##eee#ssssss#eee##h#....."; // Focused reprimanding eyes
+        g[14] = ".....#h#weee#ssssss#weee#h#.....";
+
+        if (stage === 'talk1') {
+          g[19] = "......#ddssss######ssssdd#......";
+          g[20] = ".......#dsss#MMMMMM#sssd#.......";
+          g[21] = "........#DDsss####sssDD#........";
+        } else if (stage === 'talk2') {
+          g[19] = "......#ddsss########sssdd#......";
+          g[20] = ".......#dss#wwwwwwww#ssd#.......";
+          g[21] = "........#DD#MMMMMMMM#DD#........";
+        } else {
+          // Default scold: firm, resolute pouting/frowning mouth
+          g[19] = "......#ddsssssmmmmsssssdd#......";
+          g[20] = ".......#dsssss#mm#sssssd#.......";
+          g[21] = "........#DDssssssssssDD#........";
         }
       } else if (mood === 'cheer') {
-        g[10] = ".......#ss#..#ssss#..#ss#.......";
-        g[11] = ".......#ss.##.ssss.##.ss#.......";
-        if (talking) {
-          g[13] = "........#ssss######ssss#........";
-          g[14] = "........#ssss#wwww#ssss#........";
-          g[15] = ".........#sss#mmmm#sss#.........";
+        // Delighted, proud mother: joyful curved eyes (^ ^), wide radiant smile, prominent blush
+        g[11] = ".....#hhssSSssssssssSSsshh#.....";
+        g[12] = ".....#hs#eee#ssssss#eee#sh#....."; // High happy eyebrows
+        g[13] = ".....#hss#ee#ssssss#ee#ssh#....."; // Joyful curved eye arc (⌒ ⌒)
+        g[14] = ".....#hs##ss#ssssss#ss##sh#....."; // Eye smile crease & cheek rise
+        g[15] = "....#GgsSbbbssssssssbbbSsgG#...."; // Radiant blushing cheeks
+
+        if (stage === 'talk1') {
+          g[19] = "......#ddssss######ssssdd#......";
+          g[20] = ".......#dsss#wwwwww#sssd#.......";
+          g[21] = "........#DDss#MMuu#ssDD#........";
+        } else if (stage === 'talk2') {
+          g[19] = "......#ddsss########sssdd#......";
+          g[20] = ".......#dss#wwwwwwww#ssd#.......";
+          g[21] = "........#DDs#MMuuuu#sDD#........";
         } else {
-          g[13] = "........#sssssmmmmsssss#........";
-          g[14] = "........#sssssswwssssss#........";
+          // Default cheer: warm happy smile with white teeth showing
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#wwww#ssssd#.......";
+          g[21] = "........#DDsss#MM#sssDD#........";
         }
       } else if (mood === 'gold') {
-        g[10] = ".......#ss#gg#ssss#gg#ss#.......";
-        g[11] = ".......#ss#gg#ssss#gg#ss#.......";
-        if (talking) {
-          g[13] = "........#ssss######ssss#........";
-          g[14] = "........#ssss#wwww#ssss#........";
+        // Golden Clothespin excited / amazed: sparkling gold diamond glint in eyes, enthusiastic smile
+        g[12] = ".....#hs#eee#ssssss#eee#sh#.....";
+        g[13] = ".....#h#sGGws#ssss#sGGws#h#....."; // Golden star shine in eyes!
+        g[14] = ".....#h#gGGws#ssss#gGGws#h#.....";
+        g[15] = "....#GgsSgGgbbssssbbgGgSsgG#....";
+
+        if (stage === 'talk1') {
+          g[19] = "......#ddssss######ssssdd#......";
+          g[20] = ".......#dsss#wwwwww#sssd#.......";
+          g[21] = "........#DDss#MMuu#ssDD#........";
+        } else if (stage === 'talk2') {
+          g[19] = "......#ddsss########sssdd#......";
+          g[20] = ".......#dss#wwwwwwww#ssd#.......";
+          g[21] = "........#DDs#MMuuuu#sDD#........";
         } else {
-          g[13] = "........#sssssmmmmsssss#........";
+          // Default gold: excited grin
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#wwww#ssssd#.......";
+          g[21] = "........#DDsss#MM#sssDD#........";
         }
       } else { // normal
-        if (talking) {
-          g[13] = "........#sssss####sssss#........";
-          g[14] = "........#sssss#mm#sssss#........";
-        } else {
-          g[13] = "........#ssssssmmssssss#........";
+        if (stage === 'talk1') {
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#MMMM#ssssd#.......";
+          g[21] = "........#DDsss####sssDD#........";
+        } else if (stage === 'talk2') {
+          g[19] = "......#ddssss######ssssdd#......";
+          g[20] = ".......#dsss#wwwwww#sssd#.......";
+          g[21] = "........#DDss#MMuu#ssDD#........";
+        } else if (stage === 'blink_half') {
+          g[13] = ".....#h#ssssssssssssssss#h#.....";
+          g[14] = ".....#hs##ee#ssssss#ee##sh#.....";
+        } else if (stage === 'blink_full') {
+          g[13] = ".....#h#ssssssssssssssss#h#.....";
+          g[14] = ".....#hss##esssssssse##ssh#.....";
+        } else if (stage === 'glance') {
+          g[13] = ".....#h#eeew#ssssss#eeew#h#.....";
+          g[14] = ".....#h#seee#ssssss#seee#h#.....";
+        } else if (stage === 'poke') {
+          g[11] = ".....#hh#e#SSssssssSS#e#hh#.....";
+          g[12] = ".....#hs##ee#ssssss#ee##sh#.....";
+          g[13] = ".....#h#weee#ssssss#weee#h#.....";
+          g[14] = ".....#h#weee#ssssss#weee#h#.....";
+          g[19] = "......#ddsssss####sssssdd#......";
+          g[20] = ".......#dssss#uuuu#ssssd#.......";
+          g[21] = "........#DDsss####sssDD#........";
         }
       }
       return g;
@@ -1976,17 +2800,22 @@ class SampayanGame {
     };
 
     this.nanayPortraits = {};
-    this.nanayPortraitsTalk = {};
+    this.nanayPortraitsTalk1 = {};
+    this.nanayPortraitsTalk2 = {};
     for (const mood of ['normal', 'urgent', 'scold', 'cheer', 'gold']) {
-      this.nanayPortraits[mood] = renderGridToCanvas(getMoodGrid(mood, false));
-      this.nanayPortraitsTalk[mood] = renderGridToCanvas(getMoodGrid(mood, true));
+      this.nanayPortraits[mood] = renderGridToCanvas(getMoodGrid(mood, 'default'));
+      this.nanayPortraitsTalk1[mood] = renderGridToCanvas(getMoodGrid(mood, 'talk1'));
+      this.nanayPortraitsTalk2[mood] = renderGridToCanvas(getMoodGrid(mood, 'talk2'));
     }
+    // Backwards compatibility alias
+    this.nanayPortraitsTalk = this.nanayPortraitsTalk2;
 
-    // Natural idle blink frame
-    const blinkGrid = [...BASE_GRID];
-    blinkGrid[10] = ".......#ssssssssssssssss#.......";
-    blinkGrid[11] = ".......#ss####ssss####ss#.......";
-    this.nanayPortraitBlink = renderGridToCanvas(blinkGrid);
+    // Natural idle micro-expressions & interactive poke reaction
+    this.nanayPortraitBlinkHalf = renderGridToCanvas(getMoodGrid('normal', 'blink_half'));
+    this.nanayPortraitBlinkFull = renderGridToCanvas(getMoodGrid('normal', 'blink_full'));
+    this.nanayPortraitBlink = this.nanayPortraitBlinkFull;
+    this.nanayPortraitGlance = renderGridToCanvas(getMoodGrid('normal', 'glance'));
+    this.nanayPortraitPoke = renderGridToCanvas(getMoodGrid('normal', 'poke'));
   }
 
   setNanaySpeech(textTl, textEn, duration = 2.4, mood = 'normal') {
@@ -2016,56 +2845,194 @@ class SampayanGame {
 
     // 1. Mother Icon around bottom left (visible throughout gameplay as retro arcade HUD avatar)
     const ix = 8;
-    const iy = 224;
+    const iy = this.renderer.height - 56;
     const pw = 34;
     const ph = 34;
 
     // Avatar HUD frame is ALWAYS fully opaque solid (alpha = 1.0) so it NEVER flashes or pops on speech exit!
     ctx.globalAlpha = 1.0;
 
-    // Outer drop shadow
-    ctx.fillStyle = '#1c1b19';
-    ctx.fillRect(ix + 2, iy + 2, pw, ph);
-
-    // Frame outer border
-    ctx.fillRect(ix - 2, iy - 2, pw + 4, ph + 4);
-
-    // Frame background fill based on mood
-    let frameBg = '#e6f4f8';
-    if (mood === 'urgent' || mood === 'scold') frameBg = '#ffe8e8';
-    if (mood === 'cheer') frameBg = '#dcfce7';
-    if (mood === 'gold') frameBg = '#fef9c3';
-    ctx.fillStyle = frameBg;
-    ctx.fillRect(ix, iy, pw, ph);
-
-    // Corner stud accents
-    const studColor = mood === 'gold' ? '#d97706' : (mood === 'urgent' || mood === 'scold' ? '#ce1126' : '#79756e');
-    ctx.fillStyle = studColor;
-    ctx.fillRect(ix, iy, 2, 2);
-    ctx.fillRect(ix + pw - 2, iy, 2, 2);
-    ctx.fillRect(ix, iy + ph - 2, 2, 2);
-    ctx.fillRect(ix + pw - 2, iy + ph - 2, 2, 2);
-
-    // Dynamic portrait: talking mouth flap during speech, natural blink when idle
-    let portraitCanvas = null;
+    // Dynamic physics offsets: gentle breathing when idle, speech bobbing when talking, vibration on scold
+    let bobY = 0;
+    let bobX = 0;
+    const speechElapsed = hasSpeech ? (this.nanaySpeech.maxTimer - this.nanaySpeech.timer) : 0;
     if (hasSpeech) {
-      const isMouthOpen = Math.floor((this.nanaySpeech.maxTimer - this.nanaySpeech.timer) * 7) % 2 === 0;
-      if (isMouthOpen && this.nanayPortraitsTalk && this.nanayPortraitsTalk[mood]) {
-        portraitCanvas = this.nanayPortraitsTalk[mood];
+      bobY = Math.round(Math.sin(speechElapsed * 14) * 0.85);
+      if (mood === 'scold') {
+        bobX = (Math.floor(speechElapsed * 24) % 2 === 0) ? -1 : 1;
+      } else if (mood === 'cheer') {
+        bobY = Math.round(Math.sin(speechElapsed * 10) * 1.4);
+      }
+    } else {
+      // Gentle breathing idle rhythm
+      const animTime = this.time || this.t || 0;
+      const breathCycle = (animTime * 2.5) % (Math.PI * 2);
+      bobY = Math.sin(breathCycle) > 0.65 ? -1 : 0;
+    }
+
+    // Interactive squish & stretch on tap / click
+    let squishX = 0;
+    let squishY = 0;
+    if (this.nanayPokeTimer > 0) {
+      const p = this.nanayPokeTimer / 0.45;
+      const elastic = Math.sin(p * Math.PI * 4) * p;
+      squishX = elastic * 2.5;
+      squishY = -elastic * 2.5;
+    }
+
+    // Dynamic portrait: smooth 4-stage mouth flapping during speech, natural multi-stage blink and glance when idle
+    let portraitCanvas = null;
+    const animTime = this.time || this.t || 0;
+    if (this.nanayPokeTimer > 0.15 && this.nanayPortraitPoke) {
+      portraitCanvas = this.nanayPortraitPoke;
+    } else if (hasSpeech) {
+      const talkCycle = Math.floor(speechElapsed * 9) % 4;
+      if (talkCycle === 1 && this.nanayPortraitsTalk1 && this.nanayPortraitsTalk1[mood]) {
+        portraitCanvas = this.nanayPortraitsTalk1[mood];
+      } else if (talkCycle === 2 && this.nanayPortraitsTalk2 && this.nanayPortraitsTalk2[mood]) {
+        portraitCanvas = this.nanayPortraitsTalk2[mood];
+      } else if (talkCycle === 3 && this.nanayPortraitsTalk1 && this.nanayPortraitsTalk1[mood]) {
+        portraitCanvas = this.nanayPortraitsTalk1[mood];
       } else {
         portraitCanvas = this.nanayPortraits && (this.nanayPortraits[mood] || this.nanayPortraits.normal);
       }
     } else {
-      const blinkCycle = (this.t || 0) % 4.0;
-      if (blinkCycle < 0.18 && this.nanayPortraitBlink) {
-        portraitCanvas = this.nanayPortraitBlink;
+      const glanceCycle = animTime % 9.0;
+      const blinkCycle = animTime % 4.6;
+
+      if (blinkCycle < 0.05 && this.nanayPortraitBlinkHalf) {
+        portraitCanvas = this.nanayPortraitBlinkHalf;
+      } else if (blinkCycle < 0.16 && this.nanayPortraitBlinkFull) {
+        portraitCanvas = this.nanayPortraitBlinkFull;
+      } else if (blinkCycle < 0.22 && this.nanayPortraitBlinkHalf) {
+        portraitCanvas = this.nanayPortraitBlinkHalf;
+      } else if (glanceCycle > 4.2 && glanceCycle < 5.0 && this.nanayPortraitGlance) {
+        portraitCanvas = this.nanayPortraitGlance;
       } else {
         portraitCanvas = this.nanayPortraits && this.nanayPortraits.normal;
       }
     }
 
+    // Outer drop shadow
+    ctx.fillStyle = '#181210';
+    ctx.fillRect(ix + 2, iy + 2, pw, ph);
+
+    // Frame outer border
+    ctx.fillRect(ix - 2, iy - 2, pw + 4, ph + 4);
+
+    // Frame background fill based on mood (with subtle urgency pulse if urgent)
+    let frameBg = '#f8fafc';
+    if (mood === 'urgent') {
+      const pulse = Math.sin(animTime * 8) > 0;
+      frameBg = pulse ? '#fee2e2' : '#fff1f2';
+    } else if (mood === 'scold') {
+      frameBg = '#ffe4e6';
+    } else if (mood === 'cheer') {
+      frameBg = '#dcfce7';
+    } else if (mood === 'gold') {
+      frameBg = '#fef9c3';
+    }
+    ctx.fillStyle = frameBg;
+    ctx.fillRect(ix, iy, pw, ph);
+
+    // Inner tactile bevel highlights
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fillRect(ix, iy, pw, 1);
+    ctx.fillRect(ix, iy, 1, ph);
+    ctx.fillStyle = 'rgba(24, 18, 16, 0.18)';
+    ctx.fillRect(ix, iy + ph - 1, pw, 1);
+    ctx.fillRect(ix + pw - 1, iy, 1, ph);
+
+    // Corner stud accents (metallic rivets)
+    const studColor = mood === 'gold' ? '#d97706' : (mood === 'urgent' || mood === 'scold' ? '#dc2626' : '#64748b');
+    ctx.fillStyle = studColor;
+    ctx.fillRect(ix, iy, 2, 2);
+    ctx.fillRect(ix + pw - 2, iy, 2, 2);
+    ctx.fillRect(ix, iy + ph - 2, 2, 2);
+    ctx.fillRect(ix + pw - 2, iy + ph - 2, 2, 2);
+    // Stud glint highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.fillRect(ix, iy, 1, 1);
+    ctx.fillRect(ix + pw - 2, iy, 1, 1);
+    ctx.fillRect(ix, iy + ph - 2, 1, 1);
+    ctx.fillRect(ix + pw - 2, iy + ph - 2, 1, 1);
+
+    // Render portrait canvas cleanly clipped inside avatar HUD frame
     if (portraitCanvas) {
-      ctx.drawImage(portraitCanvas, ix + 1, iy + 1);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(ix, iy, pw, ph);
+      ctx.clip();
+      if (Math.abs(squishX) > 0.05 || Math.abs(squishY) > 0.05) {
+        const cx = ix + pw / 2;
+        const cy = iy + ph - 1;
+        ctx.translate(cx, cy);
+        ctx.scale(1 + squishX / pw, 1 + squishY / ph);
+        ctx.drawImage(portraitCanvas, -16 + bobX, -32 + 1 + bobY);
+      } else {
+        ctx.drawImage(portraitCanvas, ix + 1 + bobX, iy + 1 + bobY);
+      }
+      ctx.restore();
+    }
+
+    // Dynamic Emotion Overlays & Emotes (anchored cleanly to avatar)
+    if (mood === 'scold') {
+      // Animated Anger Vein Mark (💢) pulsing at top-right over her dark hair
+      const aPhase = Math.floor(animTime * 6) % 2;
+      const ax = ix + 24;
+      const ay = iy + 3;
+      ctx.fillStyle = aPhase === 0 ? '#ef4444' : '#fbbf24';
+      ctx.fillRect(ax + 1, ay, 1, 5);
+      ctx.fillRect(ax + 3, ay, 1, 5);
+      ctx.fillRect(ax, ay + 1, 5, 1);
+      ctx.fillRect(ax, ay + 3, 5, 1);
+    } else if (mood === 'urgent') {
+      // Animated dripping sweat bead (💧)
+      const drip = Math.floor((animTime * 4) % 3);
+      const sx = ix + 24;
+      const sy = iy + 9 + drip;
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(sx, sy, 2, 2);
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fillRect(sx, sy, 1, 1);
+    } else if (mood === 'cheer') {
+      // Twinkling sparkle stars (✦)
+      const spPhase = Math.sin(animTime * 7);
+      if (spPhase > 0.1) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(ix + pw - 6, iy + 3, 1, 3);
+        ctx.fillRect(ix + pw - 7, iy + 4, 3, 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ix + pw - 6, iy + 4, 1, 1);
+      }
+      if (spPhase < -0.1) {
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(ix + 4, iy + 5, 1, 3);
+        ctx.fillRect(ix + 3, iy + 6, 3, 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ix + 4, iy + 6, 1, 1);
+      }
+    } else if (mood === 'gold') {
+      // Golden shimmering diamond glimmers (✨)
+      const gPhase = Math.sin(animTime * 8);
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(ix + pw - 6, iy + (gPhase > 0 ? 3 : 7), 2, 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(ix + pw - 6, iy + (gPhase > 0 ? 3 : 7), 1, 1);
+    }
+
+    // Tap / Poke Startle Emote (!) popping up centered above head bun
+    if (this.nanayPokeTimer > 0.12) {
+      const popP = (0.45 - this.nanayPokeTimer) / 0.33;
+      const popY = iy - 9 - Math.round(Math.min(1, popP) * 4);
+      const popX = ix + Math.round(pw / 2) - 3;
+      ctx.fillStyle = '#181210';
+      ctx.fillRect(popX, popY, 6, 8);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(popX + 1, popY + 1, 4, 6);
+      ctx.fillStyle = '#181210';
+      ctx.fillRect(popX + 2, popY + 2, 2, 3);
+      ctx.fillRect(popX + 2, popY + 6, 2, 1);
     }
 
     // 2. Chat Bubble Connecting to Mother's Icon (when Mother has speech)
@@ -2122,13 +3089,13 @@ class SampayanGame {
 
       const bx = 50;
       let by = iy + Math.round((ph - bh) / 2);
-      by = Math.max(160, Math.min(this.renderer.height - bh - 6, by));
+      by = Math.max(this.renderer.height - 120, Math.min(this.renderer.height - bh - 6, by));
 
       // Record rect for interactive dismiss click
       this.lastNanayBubbleRect = { x: bx - 2, y: by - 2, w: bw + 4, h: bh + 4 };
 
       // Outer drop shadow
-      ctx.fillStyle = '#1c1b19';
+      ctx.fillStyle = '#181210';
       ctx.fillRect(bx + 2, by + 2, bw, bh);
 
       // Outer card border
@@ -2144,10 +3111,10 @@ class SampayanGame {
 
       // Connecting pointer tail: connects left edge of chat bubble (bx) directly to Mother's icon frame
       const tailTipX = ix + pw + 2; // Right edge of Mother's frame border (x=44)
-      const my = Math.min(by + bh - 6, Math.max(by + 8, iy + 14)); // Aligned to Mother's mouth level
+      const my = Math.min(by + bh - 6, Math.max(by + 8, iy + 20 + bobY)); // Aligned to Mother's mouth level
 
       // Black tail outline triangle
-      ctx.fillStyle = '#1c1b19';
+      ctx.fillStyle = '#181210';
       ctx.beginPath();
       ctx.moveTo(bx, my - 5);
       ctx.lineTo(tailTipX, my);
@@ -2158,7 +3125,7 @@ class SampayanGame {
       ctx.fillStyle = cardBg;
       ctx.beginPath();
       ctx.moveTo(bx + 1, my - 3);
-      ctx.lineTo(tailTipX + 2, my);
+      ctx.lineTo(tailTipX + 1.5, my);
       ctx.lineTo(bx + 1, my + 3);
       ctx.fill();
 
@@ -2549,10 +3516,18 @@ class SampayanGame {
       if (item.state !== 'basket' && item.state !== 'lost') this.drawCloth(item, windT);
     }
 
+    if (this.cat && this.cat.active) {
+      this.renderer.castShadow(this.cat.x, this.cat.y, this.cat.z, 0.45);
+    }
+
     this.renderer.drawLeaves(windT);
     this.renderer.flushShadows();
     this.renderer.applyShadows(this.renderer.groundZ);
     this.renderer.shadeEdges();
+
+    if (this.smokeEvent && this.smokeEvent.particles && this.smokeEvent.particles.length > 0) {
+      this.renderer.drawSmokeParticles(this.smokeEvent.particles);
+    }
 
     this.renderer.gradeStorm(storm, windT, this.wetness, this.flash, this.puddle);
     this.renderer.drawClouds(storm, windT, this.clouds);
@@ -2571,6 +3546,27 @@ class SampayanGame {
     if (this.freezeTimer > 0) {
       this.drawGoldenAura();
     }
+
+    // Soot & Paw smudges on soiled clothes
+    for (const item of this.items) {
+      if (item.soiled && (item.state === 'line' || item.state === 'falling' || item.state === 'tossed' || item.state === 'loose' || item.state === 'ground')) {
+        const p = this.renderer.project(item.x, item.y, item.z - 0.4);
+        if (p.d > -1e8) {
+          this.renderer.drawSootSmudge(this.renderer.ctx, p.sx, p.sy, item.soiledBy === 'cat' ? 'paw' : 'smoke');
+        }
+      }
+    }
+
+    // Munin Cat pixel art
+    if (this.cat && this.cat.active) {
+      this.renderer.drawMuninCat(this.cat, this.time);
+    }
+
+    // Urgent Utos beacon indicator
+    if (this.utos && this.utos.active && this.utos.item) {
+      this.drawUtosBeacon(this.utos.item);
+    }
+
     this.drawFloaters();
     this.drawNanayBubble();
     this.drawRoundBanner();
@@ -2757,7 +3753,8 @@ class SampayanGame {
       this.pointer = this.toCanvas(e);
 
       // Interactive click / tap reaction on Mother's Icon at bottom-left
-      if (!this.held && this.pointer.x >= 6 && this.pointer.x <= 44 && this.pointer.y >= 220 && this.pointer.y <= 262) {
+      if (!this.held && this.pointer.x >= 6 && this.pointer.x <= 44 && this.pointer.y >= this.renderer.height - 60 && this.pointer.y <= this.renderer.height - 18) {
+        this.nanayPokeTimer = 0.45;
         if (!this.nanaySpeech || (this.nanaySpeech.maxTimer - this.nanaySpeech.timer) >= 0.25) {
           const clickQuotesTl = [
             "Kilos na, Nak! Mag-aamoy kulob ang mga damit!",
@@ -2789,9 +3786,38 @@ class SampayanGame {
         }
       }
 
+      // Munin Cat interaction ("Tsupe!")
+      if (!this.held && this.cat && this.cat.active && this.cat.state !== 'flee') {
+        const catProj = this.renderer.project(this.cat.x, this.cat.y, this.cat.z);
+        if (catProj.d > -1e8) {
+          const dx = this.pointer.x - catProj.sx;
+          const dy = this.pointer.y - (catProj.sy - 12);
+          if (Math.abs(dx) <= 24 && Math.abs(dy) <= 20) {
+            this.shooCat();
+            return;
+          }
+        }
+      }
+
       // If already holding an item, clicking drops or banks it (ignore clicks during auto-salba flight)
       if (this.held) {
         if (this.auto) return;
+
+        // Multi-salba: If currently holding a light item and clicked another light item, scoop it!
+        if (this.held.weight === 'light' && (!this.heldItems || this.heldItems.length < 1)) {
+          const secondItem = this.pickAt(this.pointer.x, this.pointer.y);
+          if (secondItem && secondItem !== this.held && secondItem.weight === 'light' && (secondItem.state === 'line' || secondItem.state === 'falling' || secondItem.state === 'ground')) {
+            if (!this.heldItems) this.heldItems = [];
+            secondItem.pinsRemaining = 0;
+            secondItem.state = 'held';
+            this.heldItems.push(secondItem);
+            this.audio.playSfx('pop');
+            const p = this.renderer.project(secondItem.x, secondItem.y, secondItem.z);
+            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA! 🧺' : 'MULTI-CARRY! 🧺', p.sx, p.sy - 12, '#38bdf8', 6);
+            return;
+          }
+        }
+
         this.letGo();
         return;
       }
@@ -2801,6 +3827,7 @@ class SampayanGame {
 
       this.pointerDownPos = { x: this.pointer.x, y: this.pointer.y };
       this.pointerDownTime = performance.now();
+      this.pointerHistory = [{ x: this.pointer.x, y: this.pointer.y, t: this.pointerDownTime }];
 
       try { canvas.setPointerCapture(e.pointerId); } catch {}
       this.grab(item, false);
@@ -2811,6 +3838,12 @@ class SampayanGame {
       if (this.paused || this.isInCutscene()) return;
       if (this.held && !this.auto) {
         this.pointer = this.toCanvas(e);
+        const now = performance.now();
+        if (!this.pointerHistory) this.pointerHistory = [];
+        this.pointerHistory.push({ x: this.pointer.x, y: this.pointer.y, t: now });
+        if (this.pointerHistory.length > 20) {
+          this.pointerHistory.splice(0, this.pointerHistory.length - 20);
+        }
       }
     });
 

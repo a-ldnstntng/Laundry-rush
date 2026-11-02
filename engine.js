@@ -9,13 +9,13 @@
 class SampayanRenderer {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.width = options.width || 360;
-    this.height = options.height || 280;
-    this.scale = options.scale || 12.8;
-    this.pitch = (options.pitch != null ? options.pitch : 42.0) * Math.PI / 180;
-    this.yaw = (options.yaw != null ? options.yaw : 16) * Math.PI / 180;
+    this.width = options.width || 480;
+    this.height = options.height || 270;
+    this.scale = options.scale || 18.8;
+    this.pitch = (options.pitch != null ? options.pitch : 30.0) * Math.PI / 180;
+    this.yaw = (options.yaw != null ? options.yaw : 2.0) * Math.PI / 180;
     this.originX = options.originX || 0;
-    this.originY = options.originY != null ? options.originY : 8;
+    this.originY = options.originY != null ? options.originY : 22;
     this.shadowX = options.shadowX != null ? options.shadowX : 0.9;
     this.shadowY = options.shadowY != null ? options.shadowY : -0.35;
 
@@ -521,6 +521,234 @@ class SampayanRenderer {
         this.pix[i + 1] = pale;
       }
     }
+  }
+
+  /* ---------- Rooftop Chaos Hazard Renderers (Smoke, Cat, Soot, Tsinelas) ---------- */
+  drawSmokeParticles(particles) {
+    if (!particles || !particles.length) return;
+    for (const p of particles) {
+      const proj = this.project(p.x, p.y, p.z);
+      if (proj.d < -1e8) continue;
+      const progress = p.life / p.maxLife;
+      const alpha = Math.sin(progress * Math.PI) * 0.72;
+      if (alpha <= 0.04) continue;
+      const sr = Math.max(2, Math.round(p.r * this.scale * (0.6 + progress * 0.8)));
+      const cx = proj.sx | 0, cy = proj.sy | 0;
+      const ramp = this.rampOf(p.color || [115, 110, 105]);
+
+      for (let iy = Math.max(0, cy - sr); iy <= cy + sr && iy < this.height; iy++) {
+        for (let ix = Math.max(0, cx - sr); ix <= cx + sr && ix < this.width; ix++) {
+          const dx = (ix - cx) / sr, dy = (iy - cy) / sr, d2 = dx * dx + dy * dy;
+          if (d2 > 1) continue;
+          const i = iy * this.width + ix;
+          if (this.zb[i] > -1e8 && proj.d < this.zb[i] - 0.4) continue;
+          if (this.bayerAt(ix, iy) > alpha * (1.1 - d2 * 0.75)) continue;
+          const l = Math.floor((1 - d2) * 3 + 1);
+          this.pix[i] = ramp[this.clamp(l, 0, 4)];
+        }
+      }
+    }
+  }
+
+  drawMuninCat(cat, time) {
+    if (!cat || !cat.active || !this.ctx) return;
+    const proj = this.project(cat.x, cat.y, cat.z);
+    if (proj.d < -1e8) return;
+
+    const ctx = this.ctx;
+    const pxScale = 2; // Crisp 2x integer pixel blocks
+    const facing = cat.facing || 1; // 1 = right, -1 = left
+
+    const CAT_PAL = {
+      '#': '#181210', // Dark ink outline
+      'o': '#ea580c', // Orange tabby fur
+      'O': '#9a3412', // Tabby stripes / shadow
+      'w': '#fffbeb', // White bib / chest / paws
+      'p': '#fb7185', // Pink nose / inner ear
+      'e': '#16a34a', // Emerald green eye
+      'y': '#fef08a', // Eye highlight
+    };
+
+    const FRAMES = {
+      walk_0: [
+        ".....#...#......",
+        "....#p#.#p#.....",
+        "....#o#.#o#.....",
+        "...#ooooooo#....",
+        "..#oOoooOooo#...",
+        "..#oe#owoe#o#...",
+        "..#o#yww#y#o#...",
+        "..#oowppwoo##...",
+        "...#owwwww#o#...",
+        "....#oOoOo##o#..",
+        "....#w#.#w#..#..",
+        "....###.###....."
+      ],
+      walk_1: [
+        ".....#...#......",
+        "....#p#.#p#.....",
+        "....#o#.#o#.....",
+        "...#ooooooo#..#.",
+        "..#oOoooOooo#.#.",
+        "..#oe#owoe#o##..",
+        "..#o#yww#y#o#...",
+        "..#oowppwoo##...",
+        "...#owwwww#o#...",
+        "....#oOoOo##....",
+        ".....#w#.#w#....",
+        ".....###.###...."
+      ],
+      sit: [
+        ".....#...#......",
+        "....#p#.#p#.....",
+        "....#o#.#o#.....",
+        "...#ooooooo#....",
+        "..#oOoooOooo#...",
+        "..#oe#owoe#o#.#.",
+        "..#o#yww#y#o#.#.",
+        "..#oowppwoo###..",
+        "...#owwwww#o#...",
+        "..#oOooOoOo#....",
+        "..#ww#.#ww#.....",
+        "..####.####....."
+      ],
+      swat: [
+        "....##...#......",
+        "...#p#..#p#.....",
+        "...#o#..#o#.....",
+        "...#ooooooo##w#.",
+        "..#oOoooOooo#w#.",
+        "..#oe#owoe#o##..",
+        "..#o#yww#y#o#...",
+        "..#oowppwoo##...",
+        "...#owwwww#o#...",
+        "....#oOoOo##....",
+        "....#w#..#w#....",
+        "....###..###...."
+      ],
+      flee: [
+        "....##...##.....",
+        "...#po#.#op#....",
+        "..#ooooooooo#...",
+        ".#oOOoooOOooo#..",
+        ".#e#owwwwoe#o###",
+        ".#y#owppwo#y#..#",
+        "..#owwwwww#o#..#",
+        "...#oOoOoOo#..#.",
+        "..#oo#...#oo##..",
+        ".#ww#.....#ww#..",
+        ".###.......###.."
+      ]
+    };
+
+    let frameKey = 'walk_0';
+    if (cat.state === 'flee') {
+      frameKey = 'flee';
+    } else if (cat.state === 'knead_nap') {
+      frameKey = Math.floor(time * 4) % 2 === 0 ? 'sit' : 'walk_0';
+    } else if (cat.state === 'jump_line') {
+      frameKey = 'swat';
+    } else {
+      frameKey = Math.floor(time * 6) % 2 === 0 ? 'walk_0' : 'walk_1';
+    }
+
+    const rows = FRAMES[frameKey] || FRAMES.walk_0;
+    const spriteW = 16;
+    const spriteH = 12;
+    const drawW = spriteW * pxScale;
+    const drawH = spriteH * pxScale;
+
+    // Center sprite over projected base
+    const startX = Math.round(proj.sx - drawW / 2);
+    const startY = Math.round(proj.sy - drawH);
+
+    ctx.save();
+    for (let r = 0; r < spriteH; r++) {
+      const line = rows[r];
+      for (let c = 0; c < spriteW; c++) {
+        const char = line[c];
+        if (char === '.') continue;
+        const color = CAT_PAL[char];
+        if (!color) continue;
+        const colIdx = facing === -1 ? (spriteW - 1 - c) : c;
+        ctx.fillStyle = color;
+        ctx.fillRect(startX + colIdx * pxScale, startY + r * pxScale, pxScale, pxScale);
+      }
+    }
+
+    // Floating question mark or exclamation mark when stalking or alarmed
+    if (cat.state === 'stalk') {
+      ctx.fillStyle = '#181210';
+      ctx.font = '6px "Press Start 2P", monospace';
+      ctx.fillText('?', startX + drawW / 2 - 2, startY - 3);
+    } else if (cat.state === 'flee') {
+      ctx.fillStyle = '#ce1126';
+      ctx.font = '7px "Press Start 2P", monospace';
+      ctx.fillText('!', startX + drawW / 2 - 2, startY - 4);
+    }
+
+    ctx.restore();
+  }
+
+  drawSootSmudge(ctx, sx, sy, kind = 'smoke') {
+    if (!ctx) return;
+    ctx.save();
+    if (kind === 'paw') {
+      // 4-dot muddy pawprint
+      ctx.fillStyle = '#4a2e18';
+      // Main pad
+      ctx.fillRect(sx - 2, sy - 1, 4, 3);
+      // 3 toe dots
+      ctx.fillRect(sx - 3, sy - 4, 2, 2);
+      ctx.fillRect(sx - 0.5, sy - 5, 2, 2);
+      ctx.fillRect(sx + 2, sy - 4, 2, 2);
+    } else {
+      // Dithered soot stain
+      ctx.fillStyle = 'rgba(40, 36, 32, 0.65)';
+      ctx.fillRect(sx - 5, sy - 4, 10, 8);
+      ctx.fillStyle = 'rgba(25, 22, 20, 0.85)';
+      ctx.fillRect(sx - 3, sy - 2, 6, 4);
+      ctx.fillStyle = 'rgba(217, 119, 6, 0.4)'; // faint amber BBQ grease tint
+      ctx.fillRect(sx - 1, sy - 1, 3, 2);
+    }
+    ctx.restore();
+  }
+
+  drawTsinelasIcon(ctx, x, y, scale = 1, angerLevel = 0) {
+    if (!ctx) return;
+    ctx.save();
+    const isRage = angerLevel >= 1;
+    const soleColor = isRage ? '#dc2626' : '#0284c7'; // Classic Spartan blue or fiery red
+    const strapColor = isRage ? '#fef08a' : '#facc15'; // Yellow strap
+    const ink = '#181210';
+
+    const w = 12 * scale;
+    const h = 18 * scale;
+    const px = scale;
+
+    // Ink outline & rounded slipper sole
+    ctx.fillStyle = ink;
+    ctx.fillRect(x - 1 * px, y - 1 * px, w + 2 * px, h + 2 * px);
+
+    // Sole fill
+    ctx.fillStyle = soleColor;
+    ctx.fillRect(x, y, w, h);
+
+    // Inner bevel
+    ctx.fillStyle = isRage ? '#ef4444' : '#38bdf8';
+    ctx.fillRect(x + px, y + px, w - 2 * px, 2 * px);
+
+    // Yellow Y-strap
+    ctx.fillStyle = strapColor;
+    // Toe post
+    ctx.fillRect(x + 5 * px, y + 4 * px, 2 * px, 3 * px);
+    // Left & right strap wings
+    ctx.fillRect(x + 2 * px, y + 7 * px, 4 * px, 2 * px);
+    ctx.fillRect(x + 6 * px, y + 7 * px, 4 * px, 2 * px);
+    ctx.fillRect(x + px, y + 9 * px, 2 * px, 3 * px);
+    ctx.fillRect(x + 9 * px, y + 9 * px, 2 * px, 3 * px);
+
+    ctx.restore();
   }
 
   /* ---------- Canvas Sizing & Frame Presentation ---------- */

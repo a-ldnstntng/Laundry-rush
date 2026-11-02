@@ -615,6 +615,27 @@ class SampayanAudio {
       case 'countdownGo': // Arcade GO! launch chime
         this.sfxCountdown(true);
         break;
+      case 'toss': // Swoosh sound when flicking clothes into the air
+        this.sfxToss();
+        break;
+      case 'swish': // Rewarding basketball chime on long-distance batya score
+        this.sfxSwish();
+        break;
+      case 'meow': // 8-bit cat meow for Munin the Puspin
+        this.sfxMeow();
+        break;
+      case 'catHiss': // Startled screech when Munin is shooed away ("Tsupe!")
+        this.sfxCatHiss();
+        break;
+      case 'unpin': // Snappy double-click sound for clothespin unpinning
+        this.sfxUnpin();
+        break;
+      case 'sizzle': // Soft barbecue grill sizzle/crackle for Mang Boy's smoke
+        this.sfxSizzle();
+        break;
+      case 'tsinelas': // Dramatic rubber slipper thwack for Nanay's threat meter
+        this.sfxTsinelas();
+        break;
     }
   }
 
@@ -906,6 +927,208 @@ class SampayanAudio {
       osc.start(now + idx * 0.15);
       osc.stop(now + idx * 0.15 + 0.25);
     });
+  }
+
+  sfxToss() {
+    const now = this.ac.currentTime;
+    const osc = this.ac.createOscillator();
+    const gain = this.ac.createGain();
+    const filter = this.ac.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(620, now);
+    osc.frequency.exponentialRampToValueAtTime(170, now + 0.16);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1300, now);
+    filter.frequency.linearRampToValueAtTime(320, now + 0.16);
+
+    gain.gain.setValueAtTime(0.26, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    osc.start(now);
+    osc.stop(now + 0.18);
+  }
+
+  sfxSwish() {
+    const now = this.ac.currentTime;
+    // Crisp ringing bell chime arpeggio (F6, C7, F7, G7)
+    const notes = [1396.91, 2093.00, 2793.83, 3135.96];
+    notes.forEach((freq, idx) => {
+      const osc = this.ac.createOscillator();
+      const gain = this.ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+
+      gain.gain.setValueAtTime(0.28, now + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.04 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(now + idx * 0.04);
+      osc.stop(now + idx * 0.04 + 0.38);
+    });
+
+    // Net swish / water plop swoosh
+    if (this.noiseBuffer) {
+      const src = this.ac.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      const filter = this.ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1800, now + 0.06);
+      filter.frequency.exponentialRampToValueAtTime(520, now + 0.22);
+      filter.Q.setValueAtTime(2.8, now + 0.06);
+
+      const gain = this.ac.createGain();
+      gain.gain.setValueAtTime(0.32, now + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+      src.start(now + 0.06);
+      src.stop(now + 0.26);
+    }
+  }
+
+  sfxMeow() {
+    const now = this.ac.currentTime;
+    const osc = this.ac.createOscillator();
+    const gain = this.ac.createGain();
+
+    osc.type = 'triangle';
+    // Authentic retro cat meow pitch-bend curve (480Hz -> 860Hz -> 520Hz)
+    osc.frequency.setValueAtTime(480, now);
+    osc.frequency.exponentialRampToValueAtTime(860, now + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(520, now + 0.32);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.24, now + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(now);
+    osc.stop(now + 0.36);
+  }
+
+  sfxCatHiss() {
+    const now = this.ac.currentTime;
+    // Startled screech tone
+    const osc = this.ac.createOscillator();
+    const gain = this.ac.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1350, now);
+    osc.frequency.exponentialRampToValueAtTime(620, now + 0.18);
+
+    gain.gain.setValueAtTime(0.26, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(now);
+    osc.stop(now + 0.22);
+
+    // Highpass noise hiss burst
+    if (this.noiseBuffer) {
+      const src = this.ac.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      const filter = this.ac.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(3000, now);
+
+      const nGain = this.ac.createGain();
+      nGain.gain.setValueAtTime(0.3, now);
+      nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+      src.connect(filter);
+      filter.connect(nGain);
+      nGain.connect(this.sfxGain);
+      src.start(now);
+      src.stop(now + 0.24);
+    }
+  }
+
+  sfxUnpin() {
+    const now = this.ac.currentTime;
+    [0, 0.045].forEach(d => {
+      const osc = this.ac.createOscillator();
+      const gain = this.ac.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1750, now + d);
+      osc.frequency.exponentialRampToValueAtTime(380, now + d + 0.025);
+
+      gain.gain.setValueAtTime(0.22, now + d);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + d + 0.03);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(now + d);
+      osc.stop(now + d + 0.035);
+    });
+  }
+
+  sfxSizzle() {
+    if (!this.noiseBuffer) return;
+    const now = this.ac.currentTime;
+    const src = this.ac.createBufferSource();
+    src.buffer = this.noiseBuffer;
+    const filter = this.ac.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(2400, now);
+    filter.Q.setValueAtTime(2.2, now);
+
+    const gain = this.ac.createGain();
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.2, now + 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+    src.start(now);
+    src.stop(now + 0.8);
+  }
+
+  sfxTsinelas() {
+    const now = this.ac.currentTime;
+    // Crisp rubber slap burst
+    if (this.noiseBuffer) {
+      const src = this.ac.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      const filter = this.ac.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+
+      const gain = this.ac.createGain();
+      gain.gain.setValueAtTime(0.44, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+      src.start(now);
+      src.stop(now + 0.14);
+    }
+
+    // Heavy rubber impact thud
+    const osc = this.ac.createOscillator();
+    const thudGain = this.ac.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(145, now);
+    osc.frequency.exponentialRampToValueAtTime(36, now + 0.15);
+
+    thudGain.gain.setValueAtTime(0.40, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+    osc.connect(thudGain);
+    thudGain.connect(this.sfxGain);
+    osc.start(now);
+    osc.stop(now + 0.20);
   }
 
   /* ---------- Mute & Volume Control ---------- */

@@ -177,6 +177,72 @@
     transition: width 0.3s steps(10);
   }
 
+  /* Tsinelas Threat Meter & Urgent Utos HUD components */
+  .tsinelas-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fffefb;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow-sm);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .tsinelas-pill.rage-danger {
+    background: #fee2e2;
+    border-color: #dc2626;
+    animation: rage-shake 0.22s infinite;
+  }
+  .tsinelas-bar-container {
+    width: 52px;
+    height: 7px;
+    background: #2b2320;
+    border: 2px solid var(--ink);
+    overflow: hidden;
+    position: relative;
+  }
+  .tsinelas-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #0284c7;
+    transition: width 0.2s ease, background 0.2s ease;
+  }
+  .tsinelas-bar-fill.warning {
+    background: #f59e0b;
+  }
+  .tsinelas-bar-fill.danger {
+    background: #ef4444;
+  }
+  @keyframes rage-shake {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-1.5px) rotate(-1deg); }
+    75% { transform: translateY(1.5px) rotate(1deg); }
+  }
+
+  .utos-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fffbeb;
+    border: 3px solid #d97706;
+    box-shadow: 3px 3px 0px var(--ink);
+    color: #92400e;
+    animation: utos-glow 0.8s ease-in-out infinite alternate;
+  }
+  .utos-pill.hidden {
+    display: none !important;
+  }
+  .utos-timer {
+    background: #d97706;
+    color: #fffefb;
+    padding: 1px 4px;
+    font-size: 7.5px;
+    border-radius: 2px;
+  }
+  @keyframes utos-glow {
+    0% { transform: scale(1); box-shadow: 2px 2px 0px var(--ink); }
+    100% { transform: scale(1.05); box-shadow: 0 0 8px rgba(245, 158, 11, 0.75); }
+  }
+
   .hud-bottom {
     position: relative;
     display: flex;
@@ -661,10 +727,10 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
     width: 100%;
-    max-width: 540px;
+    max-width: 620px;
     margin-bottom: 10px;
     text-align: center;
   }
@@ -753,8 +819,10 @@
     .hud-pill { padding: 4px 5px; font-size: 7px; }
     .hud-pill b { font-size: 8px; }
     .weather-bar-container { width: 44px; }
+    .tsinelas-bar-container { width: 36px; }
     button.btn-icon { padding: 4px 5px; font-size: 8px; }
     .grade-stamp { font-size: 20px; padding: 5px 14px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 4px; }
     .stat-label { font-size: 6.5px; }
     .stat-value { font-size: 10px; }
   }
@@ -787,6 +855,20 @@
     </div>
     <div class="hud-pill combo-pill hidden" id="hud-combo-pill">
       <b id="hud-combo-text">x2 COMBO</b>
+    </div>
+    <div class="hud-pill tsinelas-pill" id="hud-tsinelas-pill" title="Nanay's Rage Meter">
+      <span id="hud-tsinelas-icon" style="font-size: 13px; line-height: 1;">🩴</span>
+      <span id="label-hud-tsinelas">RAGE:</span>
+      <div class="tsinelas-bar-container">
+        <div id="tsinelas-bar" class="tsinelas-bar-fill"></div>
+      </div>
+      <b id="hud-tsinelas-val">0%</b>
+    </div>
+    <div class="hud-pill utos-pill hidden" id="hud-utos-pill">
+      <span style="font-size: 11px;">⚡</span>
+      <span id="label-hud-utos">UTOS:</span>
+      <b id="hud-utos-name">KUMOT</b>
+      <span class="utos-timer" id="hud-utos-timer">8s</span>
     </div>
     <div class="hud-pill">
       <svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="1" width="2" height="1" fill="#1c1b19"/><rect x="12" y="1" width="2" height="1" fill="#1c1b19"/><rect x="1" y="2" width="1" height="1" fill="#1c1b19"/><rect x="2" y="2" width="2" height="1" fill="#d49b00"/><rect x="4" y="2" width="1" height="1" fill="#1c1b19"/><rect x="11" y="2" width="1" height="1" fill="#1c1b19"/><rect x="12" y="2" width="2" height="1" fill="#d49b00"/><rect x="14" y="2" width="1" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="2" height="1" fill="#d49b00"/><rect x="4" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="1" height="1" fill="#1c1b19"/><rect x="12" y="3" width="2" height="1" fill="#d49b00"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="2" height="1" fill="#1c1b19"/><rect x="5" y="4" width="6" height="1" fill="#1c1b19"/><rect x="12" y="4" width="2" height="1" fill="#1c1b19"/><rect x="4" y="5" width="1" height="1" fill="#1c1b19"/><rect x="5" y="5" width="6" height="1" fill="#f5b800"/><rect x="11" y="5" width="1" height="1" fill="#1c1b19"/><rect x="4" y="6" width="1" height="1" fill="#1c1b19"/><rect x="5" y="6" width="1" height="1" fill="#f5b800"/><rect x="6" y="6" width="4" height="1" fill="#fff3a8"/><rect x="10" y="6" width="1" height="1" fill="#f5b800"/><rect x="11" y="6" width="1" height="1" fill="#1c1b19"/><rect x="4" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="7" width="1" height="1" fill="#f5b800"/><rect x="6" y="7" width="1" height="1" fill="#fff3a8"/><rect x="7" y="7" width="2" height="1" fill="#f5b800"/><rect x="9" y="7" width="1" height="1" fill="#fff3a8"/><rect x="10" y="7" width="1" height="1" fill="#f5b800"/><rect x="11" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="8" width="1" height="1" fill="#f5b800"/><rect x="7" y="8" width="2" height="1" fill="#fff3a8"/><rect x="9" y="8" width="1" height="1" fill="#f5b800"/><rect x="10" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="9" width="2" height="1" fill="#f5b800"/><rect x="9" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="10" width="2" height="1" fill="#1c1b19"/><rect x="6" y="11" width="1" height="1" fill="#1c1b19"/><rect x="7" y="11" width="2" height="1" fill="#f5b800"/><rect x="9" y="11" width="1" height="1" fill="#1c1b19"/><rect x="5" y="12" width="1" height="1" fill="#1c1b19"/><rect x="6" y="12" width="4" height="1" fill="#f5b800"/><rect x="10" y="12" width="1" height="1" fill="#1c1b19"/><rect x="4" y="13" width="1" height="1" fill="#1c1b19"/><rect x="5" y="13" width="6" height="1" fill="#f5b800"/><rect x="11" y="13" width="1" height="1" fill="#1c1b19"/><rect x="4" y="14" width="8" height="1" fill="#1c1b19"/></svg> <span id="label-hud-record">RECORD:</span> <b id="hud-best">0</b>
@@ -855,11 +937,13 @@
     </div>
 
     <ol class="rules-list">
-      <li id="rule-item-1"><strong>Drag to Tub</strong>: Pull clothes from the lines down into the blue laundry basin.</li>
-      <li id="rule-item-2"><strong>Spacebar Quick-Grab</strong>: Press [SPACE] or [ENTER] to automatically grab the next garment.</li>
-      <li id="rule-item-3"><strong>Garment Points</strong>: Blankets (+5) and School Uniforms (+4) are worth more than Sandos (+2) or Towels (+1).</li>
-      <li id="rule-item-4"><strong>Catch Mid-Air</strong>: Strong wind gusts blow clothes off the lines—catch them before they fly away!</li>
-      <li id="rule-item-5"><strong>Don't Get Soaked</strong>: Points are penalized if clothes get soaked. Don't let Mom down!</li>
+      <li id="rule-item-1"><strong>Drag or Flick Toss</strong>: Pull clothes into the tub, or flick fast for a +15 "Shoot sa Batya!" bonus!</li>
+      <li id="rule-item-2"><strong>Garment Weights & Multi-Carry</strong>: Light items allow multi-carry! Heavy clothes (blankets/uniforms) have 2 clothespins to snap off.</li>
+      <li id="rule-item-3"><strong>Nanay's Urgent Utos</strong>: Bank the glowing priority garment before time runs out for a 3x score multiplier!</li>
+      <li id="rule-item-4"><strong>Rooftop Hazards</strong>: Click Munin the cat ("Tsupe!") before he soils clothes, and watch out for Mang Boy's BBQ smoke!</li>
+      <li id="rule-item-5"><strong>Tsinelas Threat Meter</strong>: Soiled clothes and slow saves raise Nanay's rage! Keep it low or the flying slipper strikes!</li>
+      <li id="rule-item-6"><strong>Air Rescue & Golden Peg</strong>: Snatch blown clothes mid-air (+10) and grab the Golden Peg to freeze storm time!</li>
+      <li id="rule-item-7"><strong>Keyboard Controls</strong>: Press [SPACE] or [ENTER] to auto-grab, [P] to Pause/Resume, and [R] to Restart.</li>
     </ol>
 
     <div style="display: flex; gap: 8px; margin-top: 14px;">
@@ -964,6 +1048,14 @@
           <div class="stat-label" id="label-stat-rescues">AIR RESCUES</div>
           <div id="result-rescues" class="stat-value">0</div>
         </div>
+        <div class="stat-box">
+          <div class="stat-label" id="label-stat-swish">SWISH! TOSSES</div>
+          <div id="result-swish" class="stat-value highlight">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label" id="label-stat-utos">UTOS DONE</div>
+          <div id="result-utos" class="stat-value highlight">0</div>
+        </div>
       </div>
 
       <div class="title-actions">
@@ -985,12 +1077,14 @@
 
 (function() {
   const canvas = document.getElementById('c');
-  // Zoomed in and rotated horizontally toward user perspective
+  // Zoomed in, widescreen 16:9 canvas to occupy side margins, tilted horizontally toward arcade perspective
   const renderer = new SampayanRenderer(canvas, {
-    scale: 12.8,
-    pitch: 42.0,
-    yaw: 16,
-    originY: 8
+    width: 480,
+    height: 270,
+    scale: 18.8,
+    pitch: 30.0,
+    yaw: 2.0,
+    originY: 22
   });
   const audio = new SampayanAudio();
 
@@ -1024,6 +1118,8 @@
       recordLabel: "RECORD:",
       savedLabel: "SAVED:",
       roundLabel: "ROUND:",
+      tsinelasLabel: "RAGE:",
+      utosLabel: "UTOS:",
       weatherCalm: "CLEAR SKIES",
       weatherBreezy: "STRONG GUSTS!",
       weatherStorm: "RAINING NOW!",
@@ -1035,11 +1131,13 @@
 
       // Rules
       momQuote: "Son! The sky's turning dark and it's starting to drizzle! Put down that phone and help me bring in the laundry!",
-      rule1: "<strong>Drag to Tub</strong>: Pull clothes from the lines down into the blue laundry basin.",
-      rule2: "<strong>Keyboard Controls</strong>: Press [SPACE] or [ENTER] to auto-grab, [P] to Pause/Resume, and [R] to Restart.",
-      rule3: "<strong>Garment Points</strong>: Blankets (+5) and School Uniforms (+4) are worth more than Sandos (+2) or Towels (+1).",
-      rule4: "<strong>Air Rescue & Golden Pin</strong>: Snatch blown clothes mid-air for +10 bonus! Grab the glowing Golden Pin to freeze storm time!",
-      rule5: "<strong>Don\'t Get Soaked</strong>: Points are penalized if clothes get soaked. Don\'t let Mom down!",
+      rule1: "<strong>Drag or Flick Toss</strong>: Pull clothes into the tub, or flick fast for a +15 \"Shoot sa Batya!\" bonus!",
+      rule2: "<strong>Garment Weights & Multi-Carry</strong>: Light items allow multi-carry! Heavy clothes (blankets/uniforms) have 2 clothespins to snap off.",
+      rule3: "<strong>Nanay's Urgent Utos</strong>: Bank the glowing priority garment before time runs out for a 3x score multiplier!",
+      rule4: "<strong>Rooftop Hazards</strong>: Click Munin the cat (\"Tsupe!\") before he soils clothes, and watch out for Mang Boy's BBQ smoke!",
+      rule5: "<strong>Tsinelas Threat Meter</strong>: Soiled clothes and slow saves raise Nanay's rage! Keep it low or the flying slipper strikes!",
+      rule6: "<strong>Air Rescue & Golden Peg</strong>: Snatch blown clothes mid-air (+10) and grab the Golden Peg to freeze storm time!",
+      rule7: "<strong>Keyboard Controls</strong>: Press [SPACE] or [ENTER] to auto-grab, [P] to Pause/Resume, and [R] to Restart.",
       startNow: "START GAME",
       backTitle: "TITLE",
 
@@ -1052,6 +1150,8 @@
       statLost: "BLOWN AWAY",
       statCombo: "MAX COMBO",
       statRescues: "AIR RESCUES",
+      statSwish: "SWISH! TOSSES",
+      statUtos: "UTOS DONE",
       playAgain: "PLAY AGAIN",
       backToTitle: "BACK TO TITLE",
 
@@ -1091,6 +1191,8 @@
       recordLabel: "RECORD:",
       savedLabel: "LIGPIT:",
       roundLabel: "YUGTO:",
+      tsinelasLabel: "GALIT:",
+      utosLabel: "UTOS:",
       weatherCalm: "MAALIWALAS PA",
       weatherBreezy: "HANGING HABAGAT!",
       weatherStorm: "UMUULAN NA!",
@@ -1102,11 +1204,13 @@
 
       // Rules
       momQuote: "Nak! Dumidilim na ang langit at umaambon na oh! Bitawan mo muna 'yang selpon mo at tulungan mo akong magligpit ng sinampay!",
-      rule1: "<strong>I-drag sa Batya</strong>: Hilahin ang mga damit mula sa sampayan papunta sa asul na planggana.",
-      rule2: "<strong>Keyboard Shortcuts</strong>: Pindutin ang [SPACE]/[ENTER] para sa auto-salba, [P] para i-Pause, at [R] para Ulitin.",
-      rule3: "<strong>Puntos ng Sinampay</strong>: Mas malaki ang puntos ng Kumot (+5) at School Uniform (+4) kaysa sa Sando (+2) o Bimpo (+1).",
-      rule4: "<strong>Salag sa Hangin at Gintong Sipit</strong>: Saluhin ang damit sa ere para sa +10 bonus! Hulihin ang kumikislap na Gintong Sipit para pansamantalang itigil ang unos!",
-      rule5: "<strong>Bawal Mabasa</strong>: Bawas puntos kapag nabasa ng ulan. Patunayan mong maasahan ka sa gawaing bahay!",
+      rule1: "<strong>I-drag o I-flick Shoot</strong>: Hilahin ang damit sa planggana o i-flick pataas para sa +15 \"Shoot sa Batya!\" bonus!",
+      rule2: "<strong>Timbang at Dalawang Sipit</strong>: Pwede pagsabayin ang magagaang damit! Ang kumot at uniporme ay may 2 sipit na dapat baklasin.",
+      rule3: "<strong>Urgent Utos ni Nanay</strong>: Iligpit agad ang damit na may gintong target bago maubos ang oras para sa 3x puntos!",
+      rule4: "<strong>Pusang Gala at Usok</strong>: I-click si Munin ang pusa (\"Tsupe!\") bago niya marumihan ang labada, at iwasan ang usok ng ihaw-ihaw!",
+      rule5: "<strong>Galit ng Tsinelas</strong>: Tumataas ang galit ni Nanay kapag nadumihan o nabasa ang damit! Huwag punuin kundi lilipad ang spartan!",
+      rule6: "<strong>Salag sa Hangin at Gintong Sipit</strong>: Saluhin ang damit sa ere para sa +10 bonus! Hulihin ang Gintong Sipit para itigil ang unos!",
+      rule7: "<strong>Keyboard Shortcuts</strong>: Pindutin ang [SPACE]/[ENTER] para sa auto-salba, [P] para i-Pause, at [R] para Ulitin.",
       startNow: "MAGSIMULA NA",
       backTitle: "TITLE",
 
@@ -1119,6 +1223,8 @@
       statLost: "NALIPAD SA BUBONG",
       statCombo: "PINAKAMATAAS NA COMBO",
       statRescues: "SALAG SA HANGIN",
+      statSwish: "SHOOT SA BATYA!",
+      statUtos: "UTOS NA NAGAWA",
       playAgain: "MAGLARO ULIT",
       backToTitle: "BUMALIK SA TITLE",
 
@@ -1198,12 +1304,25 @@
   const hudStatus = document.getElementById('hud-status');
   const langHudText = document.getElementById('lang-hud-text');
 
+  const hudTsinelasPill = document.getElementById('hud-tsinelas-pill');
+  const hudTsinelasIcon = document.getElementById('hud-tsinelas-icon');
+  const labelHudTsinelas = document.getElementById('label-hud-tsinelas');
+  const tsinelasBar = document.getElementById('tsinelas-bar');
+  const hudTsinelasVal = document.getElementById('hud-tsinelas-val');
+
+  const hudUtosPill = document.getElementById('hud-utos-pill');
+  const labelHudUtos = document.getElementById('label-hud-utos');
+  const hudUtosName = document.getElementById('hud-utos-name');
+  const hudUtosTimer = document.getElementById('hud-utos-timer');
+
   const rulesMomQuote = document.getElementById('rules-mom-quote');
   const ruleItem1 = document.getElementById('rule-item-1');
   const ruleItem2 = document.getElementById('rule-item-2');
   const ruleItem3 = document.getElementById('rule-item-3');
   const ruleItem4 = document.getElementById('rule-item-4');
   const ruleItem5 = document.getElementById('rule-item-5');
+  const ruleItem6 = document.getElementById('rule-item-6');
+  const ruleItem7 = document.getElementById('rule-item-7');
   const btnCloseRulesText = document.getElementById('btn-close-rules-text');
   const btnBackRulesText = document.getElementById('btn-back-rules-text');
 
@@ -1223,6 +1342,10 @@
   const resultCombo = document.getElementById('result-combo');
   const labelStatRescues = document.getElementById('label-stat-rescues');
   const resultRescues = document.getElementById('result-rescues');
+  const labelStatSwish = document.getElementById('label-stat-swish');
+  const resultSwish = document.getElementById('result-swish');
+  const labelStatUtos = document.getElementById('label-stat-utos');
+  const resultUtos = document.getElementById('result-utos');
   const btnPlayAgainText = document.getElementById('btn-play-again-text');
   const btnBackTitleText = document.getElementById('btn-back-title-text');
 
@@ -1236,6 +1359,21 @@
   const btnSoundHud = document.getElementById('btn-sound-hud');
   const btnLangTitle = document.getElementById('btn-lang-title');
   const btnLangHud = document.getElementById('btn-lang-hud');
+
+  function getUtosDisplayName(kind, lang) {
+    const names = {
+      kumot: { tl: 'KUMOT', en: 'BLANKET' },
+      uniporme: { tl: 'UNIPORME', en: 'UNIFORM' },
+      daster: { tl: 'DASTER', en: 'DASTER' },
+      maong: { tl: 'MAONG', en: 'JEANS' },
+      polo: { tl: 'POLO', en: 'POLO' },
+      damit: { tl: 'DAMIT', en: 'SHIRT' },
+      shorts: { tl: 'SHORTS', en: 'SHORTS' },
+      sando: { tl: 'SANDO', en: 'SANDO' },
+      bimpo: { tl: 'BIMPO', en: 'TOWEL' },
+    };
+    return (names[kind] && names[kind][lang]) || (kind ? kind.toUpperCase() : '');
+  }
 
   let lastGameOverRes = null;
   let currentWeatherUrgency = 'calm';
@@ -1258,6 +1396,8 @@
 
     labelHudScore.textContent = dict.scoreLabel;
     if (labelHudRound) labelHudRound.textContent = dict.roundLabel;
+    if (labelHudTsinelas) labelHudTsinelas.textContent = dict.tsinelasLabel;
+    if (labelHudUtos) labelHudUtos.textContent = dict.utosLabel;
     labelHudRecord.textContent = dict.recordLabel;
     labelHudCount.textContent = dict.savedLabel;
 
@@ -1267,6 +1407,8 @@
     ruleItem3.innerHTML = dict.rule3;
     ruleItem4.innerHTML = dict.rule4;
     ruleItem5.innerHTML = dict.rule5;
+    if (ruleItem6) ruleItem6.innerHTML = dict.rule6;
+    if (ruleItem7) ruleItem7.innerHTML = dict.rule7;
     btnCloseRulesText.textContent = dict.startNow;
     btnBackRulesText.textContent = dict.backTitle;
 
@@ -1278,8 +1420,14 @@
     labelStatLost.textContent = dict.statLost;
     if (labelStatCombo) labelStatCombo.textContent = dict.statCombo;
     if (labelStatRescues) labelStatRescues.textContent = dict.statRescues;
+    if (labelStatSwish) labelStatSwish.textContent = dict.statSwish;
+    if (labelStatUtos) labelStatUtos.textContent = dict.statUtos;
     btnPlayAgainText.textContent = dict.playAgain;
     btnBackTitleText.textContent = dict.backToTitle;
+
+    if (typeof game !== 'undefined' && game && game.utos && game.utos.active && hudUtosName) {
+      hudUtosName.textContent = getUtosDisplayName(game.utos.kind, lang);
+    }
 
     if (pauseModalTitle) pauseModalTitle.textContent = dict.pauseTitle;
     if (pauseModalSub) pauseModalSub.textContent = dict.pauseSubtitle;
@@ -1394,6 +1542,38 @@
     onItemCountChange(saved, total) {
       hudCount.textContent = `${saved}/${total}`;
     },
+    onTsinelasChange(percent, isRage) {
+      if (!hudTsinelasVal || !tsinelasBar) return;
+      hudTsinelasVal.textContent = `${Math.round(percent)}%`;
+      tsinelasBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+
+      tsinelasBar.classList.remove('warning', 'danger');
+      if (percent >= 75) {
+        tsinelasBar.classList.add('danger');
+      } else if (percent >= 45) {
+        tsinelasBar.classList.add('warning');
+      }
+
+      if (hudTsinelasPill) {
+        if (isRage || percent >= 90) {
+          hudTsinelasPill.classList.add('rage-danger');
+          if (hudTsinelasIcon) hudTsinelasIcon.textContent = '💥';
+        } else {
+          hudTsinelasPill.classList.remove('rage-danger');
+          if (hudTsinelasIcon) hudTsinelasIcon.textContent = '🩴';
+        }
+      }
+    },
+    onUtosChange(utos) {
+      if (!hudUtosPill) return;
+      if (utos && utos.name) {
+        hudUtosPill.classList.remove('hidden');
+        if (hudUtosName) hudUtosName.textContent = getUtosDisplayName(utos.name, currentLang);
+        if (hudUtosTimer) hudUtosTimer.textContent = `${Math.ceil(utos.timer)}s`;
+      } else {
+        hudUtosPill.classList.add('hidden');
+      }
+    },
     onPhaseChange(phase) {
       if (hudComboPill) hudComboPill.classList.add('hidden');
       if (phase === 'play') {
@@ -1437,13 +1617,15 @@
       const dict = I18N[currentLang];
       resultGrade.className = `grade-stamp ${res.badgeClass}`;
       resultGrade.textContent = `GRADE ${res.grade}`;
-      resultCommentary.textContent = dict['grade' + res.grade];
+      resultCommentary.textContent = res.commentary || dict['grade' + res.grade];
       resultScore.textContent = res.score % 1 ? res.score.toFixed(1) : res.score;
       resultDry.textContent = `${res.dry} / ${res.total}`;
       resultWet.textContent = String(res.wet);
       resultLost.textContent = String(res.lost);
       if (resultCombo) resultCombo.textContent = `${res.maxCombo || 1}x`;
       if (resultRescues) resultRescues.textContent = String(res.airRescues || 0);
+      if (resultSwish) resultSwish.textContent = String(res.swishScores || 0);
+      if (resultUtos) resultUtos.textContent = String(res.utosCount || 0);
 
       hudBest.textContent = res.bestScore;
       titleBest.textContent = res.bestScore;
@@ -1457,6 +1639,7 @@
       screenResults.classList.remove('hidden');
     },
   });
+  window.game = game;
 
   game.setLanguage(currentLang);
 
