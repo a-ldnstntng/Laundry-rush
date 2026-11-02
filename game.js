@@ -59,14 +59,14 @@ class SampayanGame {
 
     // Detailed Filipino Laundry Items (with authentic weight & clothespin attributes)
     this.KINDS = {
-      floral_blanket: { w: 3.1, h: 2.3, value: 5, speed: 22.0, name: 'Floral Kumot', weight: 'heavy', pins: 2 },
-      school_uniform: { w: 1.85, h: 2.2, value: 4, speed: 32.0, name: 'School Uniform', weight: 'medium', pins: 2 },
-      daster: { w: 1.9, h: 2.25, value: 4, speed: 30.0, name: "Nanay's Daster", weight: 'medium', pins: 2 },
-      maong: { w: 1.3, h: 2.2, value: 3, speed: 25.0, name: 'Maong Pants', weight: 'heavy', pins: 2 },
-      basketball_jersey: { w: 1.6, h: 1.8, value: 3, speed: 38.0, name: 'Barangay Jersey', weight: 'medium', pins: 1 },
-      sando: { w: 1.4, h: 1.7, value: 2, speed: 44.0, name: "Tatay's Sando", weight: 'light', pins: 1 },
-      short_pambahay: { w: 1.35, h: 1.25, value: 2, speed: 46.0, name: 'Pambahay Shorts', weight: 'light', pins: 1 },
-      bimpo: { w: 1.05, h: 1.35, value: 1, speed: 56.0, name: 'Good Morning Bimpo', weight: 'light', pins: 1 },
+      floral_blanket: { w: 3.1, h: 2.3, value: 5, speed: 22.0, name: 'Floral Kumot', weight: 'heavy', pins: 2, isWhite: false },
+      school_uniform: { w: 1.85, h: 2.2, value: 4, speed: 32.0, name: 'School Uniform', weight: 'medium', pins: 2, isWhite: true },
+      daster: { w: 1.9, h: 2.25, value: 4, speed: 30.0, name: "Nanay's Daster", weight: 'medium', pins: 2, isWhite: false },
+      maong: { w: 1.3, h: 2.2, value: 3, speed: 25.0, name: 'Maong Pants', weight: 'heavy', pins: 2, isWhite: false },
+      basketball_jersey: { w: 1.6, h: 1.8, value: 3, speed: 38.0, name: 'Barangay Jersey', weight: 'medium', pins: 1, isWhite: false },
+      sando: { w: 1.4, h: 1.7, value: 2, speed: 44.0, name: "Tatay's Sando", weight: 'light', pins: 1, isWhite: true },
+      short_pambahay: { w: 1.35, h: 1.25, value: 2, speed: 46.0, name: 'Pambahay Shorts', weight: 'light', pins: 1, isWhite: false },
+      bimpo: { w: 1.05, h: 1.35, value: 1, speed: 56.0, name: 'Good Morning Bimpo', weight: 'light', pins: 1, isWhite: true },
     };
 
     // Colorful plastic clothespins (sipit)
@@ -1622,16 +1622,26 @@ class SampayanGame {
     if (speed > 220) {
       // 2.5D Ballistic Arcade Toss ("Shoot sa Batya!")
       this.audio.playSfx('toss');
+      const maxSpeed = 750;
+      const effectiveSpeed = Math.min(speed, maxSpeed);
+      const ratio = effectiveSpeed / Math.max(speed, 0.001);
+      const cvx = vx * ratio;
+      const cvy = vy * ratio;
+
       itemsToRelease.forEach((it, idx) => {
-        const spreadX = (idx - (itemsToRelease.length - 1) / 2) * 10;
+        const spreadX = (idx - (itemsToRelease.length - 1) / 2) * 12;
         it.state = 'tossed';
         const worldScale = this.renderer.scale;
-        const dirX = (vx + spreadX) / worldScale;
-        const dirY = (vy * Math.cos(this.renderer.pitch)) / (worldScale * this.renderer.sin);
-        it.vx = dirX * 1.15;
-        it.vy = dirY * 1.15;
-        it.vz = Math.max(1.8, Math.min(6.5, speed * 0.009 - (vy < 0 ? vy * 0.006 : 0)));
-        it.spin = (Math.random() - 0.5) * 8 + (vx > 0 ? 3.5 : -3.5);
+        const u = (cvx + spreadX) / worldScale;
+        const v = cvy / (worldScale * this.renderer.sin);
+        // Correct 2.5D unprojection taking camera yaw into account
+        const dirX = u * this.renderer.yawCos + v * this.renderer.yawSin;
+        const dirY = -u * this.renderer.yawSin + v * this.renderer.yawCos;
+
+        it.vx = Math.max(-28, Math.min(28, dirX * 1.15));
+        it.vy = Math.max(-28, Math.min(28, dirY * 1.15));
+        it.vz = Math.max(2.0, Math.min(6.5, effectiveSpeed * 0.009 - (cvy < 0 ? cvy * 0.006 : 0)));
+        it.spin = (Math.random() - 0.5) * 8 + (cvx > 0 ? 3.5 : -3.5);
         it.startTossPos = { x: it.x, y: it.y };
         it.wasTossed = true;
       });
@@ -1810,6 +1820,10 @@ class SampayanGame {
             this.held = null;
             this.auto = false;
           }
+          if (this.heldItems && this.heldItems.length > 0) {
+            this.heldItems.forEach(it => { it.state = 'falling'; });
+            this.heldItems = [];
+          }
           const banked = this.items.filter(i => i.state === 'basket');
           const dry = banked.filter(i => i.wet < 0.25).length;
           const wetBanked = banked.length - dry;
@@ -1899,7 +1913,22 @@ class SampayanGame {
         if (away) {
           item.vz = -9;
           item.z += item.vz * dt;
-          if (item.z < -7) item.state = 'lost';
+          if (item.z < -7) {
+            item.state = 'lost';
+            this.adjustTsinelasMeter(+20);
+            if (!this.nanaySpeech || this.nanaySpeech.timer < 0.5) {
+              const lostQuotesTl = [
+                'Hala! Nalipad na sa kalsada ang sinampay!',
+                'Naku, tangay ng hangin ang damit! Hahabulin pa natin sa baba!',
+              ];
+              const lostQuotesEn = [
+                'Oh no! The laundry blew away into the street!',
+                'The wind took the clothes! We have to chase them downstairs!',
+              ];
+              const lIdx = Math.floor(Math.random() * lostQuotesTl.length);
+              this.setNanaySpeech(lostQuotesTl[lIdx], lostQuotesEn[lIdx], 2.4, 'scold');
+            }
+          }
         } else if (item.flightTimer != null && item.flightTimer <= 0) {
           // Blown garment loses wind lift and starts descending to the rooftop floor
           item.state = 'falling';
@@ -1951,10 +1980,12 @@ class SampayanGame {
         const dx = item.x - this.BASKET.x;
         const dy = item.y - this.BASKET.y;
         const dist = Math.hypot(dx, dy);
-        const inCylinder = dist < this.BASKET.r * 1.35;
-        const inHeight = item.z <= this.BASKET.h + 0.9 && item.z >= this.BASKET.h - 0.5;
+        const inCylinder = dist < this.BASKET.r * 1.45;
+        const inHeight = item.z <= this.BASKET.h + 0.95 && item.z >= 0.45;
+        const isOverScreen = this.overBasket(item);
+        const enteredBasket = (inCylinder && inHeight) || (isOverScreen && item.z <= this.BASKET.h + 0.95 && item.z >= 0.45);
 
-        if (inCylinder && inHeight) {
+        if (enteredBasket) {
           const tossDist = item.startTossPos ? Math.hypot(item.startTossPos.x - this.BASKET.x, item.startTossPos.y - this.BASKET.y) : 0;
           this.bank(item);
           if (tossDist > 2.8) {
@@ -2155,6 +2186,8 @@ class SampayanGame {
         cat.targetItem.soiled = 'paw';
         this.audio.playSfx('meow');
         this.adjustTsinelasMeter(+15);
+        this.score = Math.max(0, Math.round((this.score - 5) * 10) / 10);
+        this.onScoreChange(this.score);
         const p = this.renderer.project(cat.targetItem.x, cat.targetItem.y, 0.6);
         this.addFloater(this.currentLang === 'tl' ? 'MADUMI! -5' : 'SOILED! -5', p.sx, p.sy - 10, '#ce1126', 6);
         this.setNanaySpeech(
@@ -2240,17 +2273,17 @@ class SampayanGame {
     smoke.timer -= dt;
 
     // Spawn smoke particles wafting horizontally
-    if (Math.random() < 0.65) {
+    if (Math.random() < 0.70) {
       smoke.particles.push({
         x: -this.ROOF_X - 1 + Math.random() * 2,
         y: this.LINE_YS[smoke.lineIdx] + (Math.random() - 0.5) * 1.6,
         z: this.LINE_Z - 0.5 + Math.random() * 1.5,
-        vx: 3.8 + Math.random() * 2.2,
+        vx: 4.6 + Math.random() * 1.8,
         vy: (Math.random() - 0.5) * 0.4,
         vz: 0.2 + Math.random() * 0.4,
         r: 0.65 + Math.random() * 0.5,
         life: 0,
-        maxLife: 3.2,
+        maxLife: 5.6,
         color: Math.random() < 0.25 ? [75, 70, 65] : [135, 130, 125],
       });
     }
@@ -2266,14 +2299,15 @@ class SampayanGame {
       if (sp.life >= sp.maxLife) smoke.particles.splice(i, 1);
     }
 
-    // Check white clothes on that line
+    // Check white clothes on that line reached by the wafting smoke plume
     const targetY = this.LINE_YS[smoke.lineIdx];
+    const smokeFrontX = -this.ROOF_X + (8.5 - smoke.timer) * 4.6;
     for (const item of this.items) {
       if (item.state === 'line' && Math.abs(item.y - targetY) < 0.6) {
-        const isWhite = item.kind === 'school_uniform' || item.kind === 'sando' || item.kind === 'bimpo';
-        if (isWhite && !item.soiled) {
+        const isWhite = item.isWhite || item.kind === 'school_uniform' || item.kind === 'sando' || item.kind === 'bimpo';
+        if (isWhite && !item.soiled && item.x <= smokeFrontX) {
           item.smokeExposure = (item.smokeExposure || 0) + dt;
-          if (item.smokeExposure >= 4.0) {
+          if (item.smokeExposure >= 3.8) {
             item.soiled = 'smoke';
             this.adjustTsinelasMeter(+15);
             const p = this.renderer.project(item.x, item.y, item.z);
@@ -2422,6 +2456,7 @@ class SampayanGame {
     const ctx = this.renderer.ctx;
     if (!ctx) return;
     const p = this.renderer.project(item.x, item.y, item.z + 0.3);
+    if (p.d < -1e8) return;
     const pulse = (Math.sin(this.time * 9) + 1) * 0.5;
     const size = Math.round(item.w * this.renderer.scale * 0.6) + 4;
 
@@ -3549,10 +3584,10 @@ class SampayanGame {
 
     // Soot & Paw smudges on soiled clothes
     for (const item of this.items) {
-      if (item.soiled && (item.state === 'line' || item.state === 'falling' || item.state === 'tossed' || item.state === 'loose' || item.state === 'ground')) {
+      if (item.soiled && (item.state === 'line' || item.state === 'falling' || item.state === 'tossed' || item.state === 'loose' || item.state === 'ground' || item.state === 'held')) {
         const p = this.renderer.project(item.x, item.y, item.z - 0.4);
         if (p.d > -1e8) {
-          this.renderer.drawSootSmudge(this.renderer.ctx, p.sx, p.sy, item.soiledBy === 'cat' ? 'paw' : 'smoke');
+          this.renderer.drawSootSmudge(this.renderer.ctx, p.sx, p.sy, item.soiled === 'paw' ? 'paw' : 'smoke');
         }
       }
     }
@@ -3787,7 +3822,7 @@ class SampayanGame {
       }
 
       // Munin Cat interaction ("Tsupe!")
-      if (!this.held && this.cat && this.cat.active && this.cat.state !== 'flee') {
+      if (this.cat && this.cat.active && this.cat.state !== 'flee') {
         const catProj = this.renderer.project(this.cat.x, this.cat.y, this.cat.z);
         if (catProj.d > -1e8) {
           const dx = this.pointer.x - catProj.sx;
@@ -3825,6 +3860,7 @@ class SampayanGame {
       const item = this.pickAt(this.pointer.x, this.pointer.y);
       if (!item) return;
 
+      this.pointerDownItem = item;
       this.pointerDownPos = { x: this.pointer.x, y: this.pointer.y };
       this.pointerDownTime = performance.now();
       this.pointerHistory = [{ x: this.pointer.x, y: this.pointer.y, t: this.pointerDownTime }];
@@ -3836,6 +3872,19 @@ class SampayanGame {
     // Window-level tracking ensures fluid 1:1 movement even when cursor exits canvas
     window.addEventListener('pointermove', e => {
       if (this.paused || this.isInCutscene()) return;
+
+      // Decisive yank pull for stubborn 2-sipit heavy items during drag
+      if (!this.held && this.pointerDownPos && this.pointerDownItem && this.pointerDownItem.state === 'line' && this.pointerDownItem.pinsRemaining === 1) {
+        const cur = this.toCanvas(e);
+        const distMoved = Math.hypot(cur.x - this.pointerDownPos.x, cur.y - this.pointerDownPos.y);
+        if (distMoved > 12) {
+          this.grab(this.pointerDownItem, false);
+          this.pointer = cur;
+          this.pointerDownItem = null;
+          return;
+        }
+      }
+
       if (this.held && !this.auto) {
         this.pointer = this.toCanvas(e);
         const now = performance.now();
@@ -3844,11 +3893,27 @@ class SampayanGame {
         if (this.pointerHistory.length > 20) {
           this.pointerHistory.splice(0, this.pointerHistory.length - 20);
         }
+
+        // Multi-salba: swiping across a second light item scoops it into carry bundle
+        if (this.held.weight === 'light' && (!this.heldItems || this.heldItems.length < 1)) {
+          const secondItem = this.pickAt(this.pointer.x, this.pointer.y);
+          if (secondItem && secondItem !== this.held && secondItem.weight === 'light' && (secondItem.state === 'line' || secondItem.state === 'falling' || secondItem.state === 'ground')) {
+            if (!this.heldItems) this.heldItems = [];
+            secondItem.pinsRemaining = 0;
+            secondItem.state = 'held';
+            this.heldItems.push(secondItem);
+            this.audio.playSfx('pop');
+            const p = this.renderer.project(secondItem.x, secondItem.y, secondItem.z);
+            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA! 🧺' : 'MULTI-CARRY! 🧺', p.sx, p.sy - 12, '#38bdf8', 6);
+          }
+        }
       }
     });
 
     const onPointerRelease = (e) => {
       if (this.paused) return;
+      if (this.pointerDownItem) this.pointerDownItem = null;
+
       // pointercancel immediately drops the item without preserving click-to-carry
       if (e && e.type === 'pointercancel') {
         if (this.held && !this.auto) {
@@ -3858,10 +3923,12 @@ class SampayanGame {
       }
 
       if (!this.auto && this.held) {
+        const now = performance.now();
         if (e && e.clientX != null) {
           this.pointer = this.toCanvas(e);
+          if (!this.pointerHistory) this.pointerHistory = [];
+          this.pointerHistory.push({ x: this.pointer.x, y: this.pointer.y, t: now });
         }
-        const now = performance.now();
         const downPos = this.pointerDownPos || this.pointer || { x: 0, y: 0 };
         const currentPos = this.pointer || downPos;
         const distMoved = Math.hypot(currentPos.x - downPos.x, currentPos.y - downPos.y);

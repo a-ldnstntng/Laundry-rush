@@ -637,7 +637,8 @@ class SampayanRenderer {
         "...#oOoOoOo#..#.",
         "..#oo#...#oo##..",
         ".#ww#.....#ww#..",
-        ".###.......###.."
+        ".###.......###..",
+        "................"
       ]
     };
 
@@ -663,9 +664,10 @@ class SampayanRenderer {
     const startY = Math.round(proj.sy - drawH);
 
     ctx.save();
-    for (let r = 0; r < spriteH; r++) {
+    for (let r = 0; r < Math.min(spriteH, rows.length); r++) {
       const line = rows[r];
-      for (let c = 0; c < spriteW; c++) {
+      if (!line) continue;
+      for (let c = 0; c < Math.min(spriteW, line.length); c++) {
         const char = line[c];
         if (char === '.') continue;
         const color = CAT_PAL[char];

@@ -857,7 +857,7 @@
       <b id="hud-combo-text">x2 COMBO</b>
     </div>
     <div class="hud-pill tsinelas-pill" id="hud-tsinelas-pill" title="Nanay's Rage Meter">
-      <span id="hud-tsinelas-icon" style="font-size: 13px; line-height: 1;">🩴</span>
+      <canvas id="hud-tsinelas-canvas" width="14" height="20" style="display: inline-block; vertical-align: middle;"></canvas>
       <span id="label-hud-tsinelas">RAGE:</span>
       <div class="tsinelas-bar-container">
         <div id="tsinelas-bar" class="tsinelas-bar-fill"></div>
@@ -1171,7 +1171,8 @@
       gradeS: "WELL, IT'S A MIRACLE! PERFECT! Every single piece is bone-dry! Here's some allowance—go grab your merienda downstairs!",
       gradeA: "GREAT JOB, SON! You saved almost everything before the downpour. Just hang the slightly damp ones indoors.",
       gradeB: "NOT BAD, BUT TOO SLOW! Half of these got drizzled on! They'll smell musty if we fold them now—point the electric fan at them first!",
-      gradeF: "GOOD GRIEF, SON! Everything is soaked! That's because you're always on your phone! Rinse all of these again before my blood pressure spikes!"
+      gradeF: "GOOD GRIEF, SON! Everything is soaked! That's because you're always on your phone! Rinse all of these again before my blood pressure spikes!",
+      gradeRage: "WATCH OUT FOR THE SLIPPER! You tested my patience today! Wash that laundry again before this slipper flies!"
     },
     tl: {
       titleTag: "EDISYONG PINOY • RETRO ARCADE",
@@ -1244,7 +1245,8 @@
       gradeS: "ABA, HIMALA! PERPEKTO! Tuyong-tuyo lahat at walang nalaglag! Dahil dyan, may bente ka sa'kin at mag-merienda ka na sa baba!",
       gradeA: "ANG GALING, NAK! Naisalba halos lahat bago bumuhos ang ulan. Isampay mo na lang sa loob yung medyo malamig pa.",
       gradeB: "HAY NAKO, MEDYO MABAGAL! Naambunan na yung iba! Mag-aamoy kulob 'to pag tinupi—iharap mo nga muna sa electric fan!",
-      gradeF: "JUSKO NAMAN, NAK! Basang-basa lahat! Kakaselpon mo 'yan eh! Banlawan mo ulit 'to lahat bago ako ma-highblood!"
+      gradeF: "JUSKO NAMAN, NAK! Basang-basa lahat! Kakaselpon mo 'yan eh! Banlawan mo ulit 'to lahat bago ako ma-highblood!",
+      gradeRage: "HUMANDA KA TALAGA SA TSINELAS! Napuno mo 'ko sa kabagalan mo! Banlawan mo ulit 'yan bago lumipad 'tong spartan!"
     }
   };
 
@@ -1305,7 +1307,7 @@
   const langHudText = document.getElementById('lang-hud-text');
 
   const hudTsinelasPill = document.getElementById('hud-tsinelas-pill');
-  const hudTsinelasIcon = document.getElementById('hud-tsinelas-icon');
+  const hudTsinelasCanvas = document.getElementById('hud-tsinelas-canvas');
   const labelHudTsinelas = document.getElementById('label-hud-tsinelas');
   const tsinelasBar = document.getElementById('tsinelas-bar');
   const hudTsinelasVal = document.getElementById('hud-tsinelas-val');
@@ -1362,17 +1364,19 @@
 
   function getUtosDisplayName(kind, lang) {
     const names = {
-      kumot: { tl: 'KUMOT', en: 'BLANKET' },
-      uniporme: { tl: 'UNIPORME', en: 'UNIFORM' },
+      floral_blanket: { tl: 'KUMOT', en: 'BLANKET' },
+      school_uniform: { tl: 'UNIPORME', en: 'UNIFORM' },
       daster: { tl: 'DASTER', en: 'DASTER' },
       maong: { tl: 'MAONG', en: 'JEANS' },
-      polo: { tl: 'POLO', en: 'POLO' },
-      damit: { tl: 'DAMIT', en: 'SHIRT' },
-      shorts: { tl: 'SHORTS', en: 'SHORTS' },
+      basketball_jersey: { tl: 'JERSEY', en: 'JERSEY' },
       sando: { tl: 'SANDO', en: 'SANDO' },
+      short_pambahay: { tl: 'SHORTS', en: 'SHORTS' },
       bimpo: { tl: 'BIMPO', en: 'TOWEL' },
+      kumot: { tl: 'KUMOT', en: 'BLANKET' },
+      uniporme: { tl: 'UNIPORME', en: 'UNIFORM' },
+      shorts: { tl: 'SHORTS', en: 'SHORTS' },
     };
-    return (names[kind] && names[kind][lang]) || (kind ? kind.toUpperCase() : '');
+    return (names[kind] && names[kind][lang]) || (kind ? kind.replace(/_/g, ' ').toUpperCase() : '');
   }
 
   let lastGameOverRes = null;
@@ -1451,7 +1455,12 @@
 
     // Refresh game over commentary if currently showing
     if (lastGameOverRes) {
-      resultCommentary.textContent = dict['grade' + lastGameOverRes.grade];
+      if (lastGameOverRes.tsinelasRage && lastGameOverRes.grade !== 'S') {
+        resultCommentary.textContent = dict.gradeRage;
+        resultGrade.textContent = lang === 'tl' ? '🩴 GALIT NI NANAY' : '🩴 SLIPPER RAGE';
+      } else {
+        resultCommentary.textContent = dict['grade' + lastGameOverRes.grade];
+      }
     }
 
     updateSoundUI(audio.isMuted());
@@ -1554,13 +1563,19 @@
         tsinelasBar.classList.add('warning');
       }
 
+      if (hudTsinelasCanvas && renderer && typeof renderer.drawTsinelasIcon === 'function') {
+        const tCtx = hudTsinelasCanvas.getContext('2d');
+        if (tCtx) {
+          tCtx.clearRect(0, 0, hudTsinelasCanvas.width, hudTsinelasCanvas.height);
+          renderer.drawTsinelasIcon(tCtx, 1, 1, 1, isRage ? 1 : percent / 100);
+        }
+      }
+
       if (hudTsinelasPill) {
         if (isRage || percent >= 90) {
           hudTsinelasPill.classList.add('rage-danger');
-          if (hudTsinelasIcon) hudTsinelasIcon.textContent = '💥';
         } else {
           hudTsinelasPill.classList.remove('rage-danger');
-          if (hudTsinelasIcon) hudTsinelasIcon.textContent = '🩴';
         }
       }
     },
@@ -1615,9 +1630,15 @@
     onGameOver(res) {
       lastGameOverRes = res;
       const dict = I18N[currentLang];
-      resultGrade.className = `grade-stamp ${res.badgeClass}`;
-      resultGrade.textContent = `GRADE ${res.grade}`;
-      resultCommentary.textContent = res.commentary || dict['grade' + res.grade];
+      if (res.tsinelasRage && res.grade !== 'S') {
+        resultGrade.className = 'grade-stamp grade-f rage-stamp';
+        resultGrade.textContent = currentLang === 'tl' ? '🩴 GALIT NI NANAY' : '🩴 SLIPPER RAGE';
+        resultCommentary.textContent = dict.gradeRage || res.commentary;
+      } else {
+        resultGrade.className = `grade-stamp ${res.badgeClass}`;
+        resultGrade.textContent = `GRADE ${res.grade}`;
+        resultCommentary.textContent = res.commentary || dict['grade' + res.grade];
+      }
       resultScore.textContent = res.score % 1 ? res.score.toFixed(1) : res.score;
       resultDry.textContent = `${res.dry} / ${res.total}`;
       resultWet.textContent = String(res.wet);
@@ -1647,6 +1668,11 @@
   applyLanguage(currentLang);
   hudBest.textContent = game.best;
   titleBest.textContent = game.best;
+
+  if (hudTsinelasCanvas && renderer && typeof renderer.drawTsinelasIcon === 'function') {
+    const tCtx = hudTsinelasCanvas.getContext('2d');
+    if (tCtx) renderer.drawTsinelasIcon(tCtx, 1, 1, 1, 0);
+  }
 
   // Responsive canvas scale
   renderer.fit();
