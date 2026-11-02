@@ -57,6 +57,19 @@ class SampayanGame {
     this.POT = [178, 92, 58];
     this.LEAF = [72, 128, 58];
 
+    // Authentic Filipino Neighbor Palettes (Barrio Houses & Skyline)
+    this.NEIGHBOR_ROOF_RED = [196, 45, 38];     // Bangketa red yero (terracotta / boysen red)
+    this.NEIGHBOR_ROOF_GREEN = [38, 128, 62];   // Barangay green yero
+    this.NEIGHBOR_ROOF_BLUE = [45, 92, 155];    // Manila blue yero
+    this.NEIGHBOR_ROOF_SILVER = [172, 180, 192];// Galvanized zinc silver-gray
+    this.NEIGHBOR_WALL_CREAM = [238, 228, 206]; // Warm pastel cream plaster
+    this.NEIGHBOR_WALL_MINT = [190, 220, 202];  // Pastel mint green
+    this.NEIGHBOR_WALL_PEACH = [236, 202, 182]; // Soft peach
+    this.NEIGHBOR_WALL_BLUE = [188, 212, 232];  // Pastel sky blue
+    this.NEIGHBOR_WOOD = [138, 96, 64];         // Wood plank siding (tabla)
+    this.NEIGHBOR_WOOD_DARK = [82, 56, 38];     // Dark wood trim / fascia
+
+
     // Detailed Filipino Laundry Items (with authentic weight & clothespin attributes)
     this.KINDS = {
       floral_blanket: { w: 3.1, h: 2.3, value: 5, speed: 22.0, name: 'Floral Kumot', weight: 'heavy', pins: 2, isWhite: false },
@@ -498,9 +511,369 @@ class SampayanGame {
     this.renderer.plot(x, y, z, this.wallColor(a, z, base));
   }
 
+  /* ---------- Sky, Ground & Barrio Neighbors Skyline ---------- */
+  initSkyAndGround() {
+    const W = this.renderer.width, H = this.renderer.height;
+    // Authentic Philippine sunny tropical sky:
+    // Rich azure blue at zenith -> vibrant cerulean -> soft cyan-blue -> warm sunlit horizon haze
+    const SKY_ZENITH = [46, 126, 230];    // Vibrant deep tropical azure (#2e7ee6)
+    const SKY_MID    = [105, 178, 246];   // Bright sunny Philippine cerulean (#69b2f6)
+    const SKY_LOW    = [168, 218, 252];   // Soft warm sunlit sky (#a8dafc)
+    const SKY_HAZE   = [226, 240, 254];   // Golden sun-kissed horizon haze (#e2f0fe)
+    const GROUND_PAVEMENT = [172, 168, 158]; // Warm concrete street / alley ground
+    const GROUND_DARK = [148, 144, 136];
+
+    for (let iy = 0; iy < H; iy++) {
+      for (let ix = 0; ix < W; ix++) {
+        const i = iy * W + ix;
+        const bayer = this.renderer.bayerAt(ix, iy) - 0.5;
+        const t = Math.min(1.0, iy / 125);
+        let r, g, b;
+        if (t < 0.40) {
+          const k = this.renderer.clamp(t / 0.40 + bayer * 0.24, 0, 1);
+          r = this.renderer.lerp(SKY_ZENITH[0], SKY_MID[0], k);
+          g = this.renderer.lerp(SKY_ZENITH[1], SKY_MID[1], k);
+          b = this.renderer.lerp(SKY_ZENITH[2], SKY_MID[2], k);
+        } else if (t < 0.78) {
+          const k = this.renderer.clamp((t - 0.40) / 0.38 + bayer * 0.24, 0, 1);
+          r = this.renderer.lerp(SKY_MID[0], SKY_LOW[0], k);
+          g = this.renderer.lerp(SKY_MID[1], SKY_LOW[1], k);
+          b = this.renderer.lerp(SKY_MID[2], SKY_LOW[2], k);
+        } else {
+          const k = this.renderer.clamp((t - 0.78) / 0.22 + bayer * 0.24, 0, 1);
+          r = this.renderer.lerp(SKY_LOW[0], SKY_HAZE[0], k);
+          g = this.renderer.lerp(SKY_LOW[1], SKY_HAZE[1], k);
+          b = this.renderer.lerp(SKY_LOW[2], SKY_HAZE[2], k);
+        }
+        if (iy > 140) {
+          const gk = this.renderer.clamp((iy - 140) / 90 + bayer * 0.35, 0, 1);
+          const noise = (this.renderer.noise(ix * 0.4, iy * 0.4) - 0.5) * 12;
+          r = this.renderer.clamp(this.renderer.lerp(r, this.renderer.lerp(GROUND_PAVEMENT[0], GROUND_DARK[0], gk) + noise, gk), 0, 255);
+          g = this.renderer.clamp(this.renderer.lerp(g, this.renderer.lerp(GROUND_PAVEMENT[1], GROUND_DARK[1], gk) + noise, gk), 0, 255);
+          b = this.renderer.clamp(this.renderer.lerp(b, this.renderer.lerp(GROUND_PAVEMENT[2], GROUND_DARK[2], gk) + noise, gk), 0, 255);
+        }
+        this.renderer.pix[i] = this.renderer.rgb(r, g, b);
+      }
+    }
+  }
+
+  buildCorrugatedGableRoof(x0_in, x1_in, y0_in, y1_in, zEave, zRidge, roofColor, seed = 0, weights = false) {
+    const x0 = Math.min(x0_in, x1_in), x1 = Math.max(x0_in, x1_in);
+    const y0 = Math.min(y0_in, y1_in), y1 = Math.max(y0_in, y1_in);
+    const step = 0.05;
+    const yr = (y0 + y1) / 2;
+    const spanHalfY = (y1 - y0) / 2;
+    const ramp = this.renderer.rampOf(roofColor);
+    const rustRamp = this.renderer.rampOf(this.YERO_RUST);
+
+    for (let y = y0 - 0.12; y <= y1 + 0.12; y += step) {
+      const t = 1 - Math.abs(y - yr) / (spanHalfY + 0.12);
+      const slopeZ = zEave + t * (zRidge - zEave);
+      const isRidge = Math.abs(y - yr) < 0.15;
+
+      for (let x = x0 - 0.12; x <= x1 + 0.12; x += step) {
+        const wave = Math.sin(x * 18) * 0.024;
+        const z = slopeZ + wave + (isRidge ? 0.035 : 0);
+
+        let col;
+        if (isRidge) {
+          col = ramp[4];
+        } else if (this.renderer.noise(x * 2.2 + seed, y * 2.2) > 0.85) {
+          col = rustRamp[this.renderer.clamp(Math.floor(2.0 + this.renderer.hash(x * 7 | 0, y * 7 | 0) * 1.5), 1, 3)];
+        } else {
+          const flute = Math.floor(x * 8) % 2 === 0;
+          col = ramp[flute ? 3 : 2];
+        }
+        this.renderer.plot(x, y, z, col);
+      }
+    }
+
+    if (weights) {
+      const midX = (x0 + x1) / 2;
+      this.renderer.box(midX - 1.2, yr - 0.35, zRidge - 0.05, midX - 0.8, yr + 0.05, zRidge + 0.15, this.CONCRETE, 4);
+      this.renderer.box(midX + 0.8, yr + 0.05, zRidge - 0.05, midX + 1.2, yr + 0.45, zRidge + 0.15, this.CONCRETE, 5);
+    }
+  }
+
+  buildCorrugatedShedRoof(x0_in, x1_in, y0_in, y1_in, zLow, zHigh, roofColor, seed = 0) {
+    const x0 = Math.min(x0_in, x1_in), x1 = Math.max(x0_in, x1_in);
+    const y0 = Math.min(y0_in, y1_in), y1 = Math.max(y0_in, y1_in);
+    const step = 0.05;
+    const ramp = this.renderer.rampOf(roofColor);
+    const rustRamp = this.renderer.rampOf(this.YERO_RUST);
+
+    for (let y = y0 - 0.12; y <= y1 + 0.12; y += step) {
+      const t = (y - y0) / Math.max(0.001, y1 - y0);
+      const slopeZ = zLow + (1 - t) * (zHigh - zLow);
+      for (let x = x0 - 0.12; x <= x1 + 0.12; x += step) {
+        const wave = Math.sin(x * 18) * 0.024;
+        const z = slopeZ + wave;
+        let col;
+        if (this.renderer.noise(x * 2.2 + seed, y * 2.2) > 0.85) {
+          col = rustRamp[2];
+        } else {
+          const flute = Math.floor(x * 8) % 2 === 0;
+          col = ramp[flute ? 3 : 2];
+        }
+        this.renderer.plot(x, y, z, col);
+      }
+    }
+  }
+
+  buildHouseBody(x0_in, x1_in, y0_in, y1_in, zBase, zTop, wallColor, seed, options = {}) {
+    const x0 = Math.min(x0_in, x1_in), x1 = Math.max(x0_in, x1_in);
+    const y0 = Math.min(y0_in, y1_in), y1 = Math.max(y0_in, y1_in);
+    const step = 0.045;
+    // Main walls
+    this.renderer.box(x0, y0, zBase, x1, y1, zTop, wallColor, seed);
+
+    // Triangular gable wall ends along the sides (x0, x1)
+    if (options.zRidge != null) {
+      const yr = (y0 + y1) / 2;
+      const spanHalfY = (y1 - y0) / 2;
+      const wallRamp = this.renderer.rampOf(wallColor);
+      for (const xEnd of [x0, x1]) {
+        for (let y = y0; y <= y1; y += step) {
+          const t = 1 - Math.abs(y - yr) / spanHalfY;
+          const topZ = zTop + t * (options.zRidge - zTop);
+          for (let z = zTop; z <= topZ; z += step) {
+            this.renderer.plot(xEnd, y, z, wallRamp[2]);
+          }
+        }
+      }
+    }
+
+    // Windows on front-facing wall (y0)
+    if (options.numWindows) {
+      const winCount = options.numWindows;
+      const span = x1 - x0;
+      for (let w = 0; w < winCount; w++) {
+        const wx = x0 + (w + 0.5) * (span / winCount);
+        const wz = zTop - 0.75;
+        // Window opening & jalousie slats
+        for (let a = -0.38; a <= 0.38; a += step) {
+          for (let z = wz - 0.45; z <= wz + 0.45; z += step) {
+            const isBorder = Math.abs(a) > 0.34 || Math.abs(z - wz) > 0.40;
+            if (isBorder) {
+              this.renderer.plot(wx + a, y0 - 0.02, z, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[2]);
+            } else {
+              const slat = Math.floor((z + 10) * 5.2) % 2;
+              this.renderer.plot(wx + a, y0 - 0.02, z, this.renderer.rampOf(this.JALOUSIE)[slat ? 3 : 2]);
+              // Vertical security grille bars
+              if (Math.abs(a % 0.16) < 0.025) {
+                this.renderer.plot(wx + a, y0 - 0.05, z, this.renderer.rampOf(this.GRILLE)[1]);
+              }
+            }
+          }
+        }
+        // Medya Agua (small wooden/yero awning above window)
+        for (let a = -0.48; a <= 0.48; a += step) {
+          for (let dy = 0; dy <= 0.32; dy += step) {
+            const az = wz + 0.52 - dy * 0.32;
+            this.renderer.plot(wx + a, y0 - dy, az, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[3]);
+          }
+        }
+      }
+    }
+  }
+
+  buildAzoteaHouse(x0_in, x1_in, y0_in, y1_in, zBase, zDeck, wallColor, seed = 0) {
+    const x0 = Math.min(x0_in, x1_in), x1 = Math.max(x0_in, x1_in);
+    const y0 = Math.min(y0_in, y1_in), y1 = Math.max(y0_in, y1_in);
+    const step = 0.045;
+    // Building body
+    this.renderer.box(x0, y0, zBase, x1, y1, zDeck, wallColor, seed);
+
+    // Deck parapet (low barrier around roofdeck)
+    const h = 0.30, t = 0.20;
+    this.renderer.box(x0, y1 - t, zDeck, x1, y1, zDeck + h, this.PLASTER, 1);
+    this.renderer.box(x1 - t, y0, zDeck, x1, y1, zDeck + h, this.PLASTER, 2);
+    this.renderer.box(x0, y0, zDeck, x1, y0 + t, zDeck + h, this.PLASTER, 3);
+    this.renderer.box(x0, y0, zDeck, x0 + t, y1, zDeck + h, this.PLASTER, 4);
+
+    // 4 Corner columns with exposed rusting rebars (bakal na nakausli)
+    const corners = [[x0 + 0.15, y0 + 0.15], [x1 - 0.15, y0 + 0.15], [x0 + 0.15, y1 - 0.15], [x1 - 0.15, y1 - 0.15]];
+    for (const [cx, cy] of corners) {
+      this.renderer.box(cx - 0.18, cy - 0.18, zDeck, cx + 0.18, cy + 0.18, zDeck + h + 0.12, this.CONCRETE, 1);
+      for (const [dx, dy] of [[-0.05, -0.05], [0.05, -0.05], [-0.05, 0.05], [0.05, 0.05]]) {
+        for (let rz = zDeck + h + 0.12; rz <= zDeck + h + 0.75; rz += step) {
+          this.renderer.plot(cx + dx, cy + dy, rz, this.renderer.rampOf(this.REBAR)[Math.floor(rz * 10) % 2 ? 2 : 1]);
+        }
+      }
+    }
+
+    // Blue water drum on the deck
+    const drumX = x0 + 0.65, drumY = y0 + 0.65, drumR = 0.30, drumH = 0.65;
+    for (let ang = 0; ang < 6.28; ang += 0.08) {
+      for (let z = 0; z <= drumH; z += step) {
+        this.renderer.plot(drumX + Math.cos(ang) * drumR, drumY + Math.sin(ang) * drumR, zDeck + z, this.renderer.rampOf(this.DRUM)[2]);
+      }
+    }
+
+    // Mini Neighbor Clothesline on Azotea
+    const pole1X = x0 + 1.5, pole2X = x1 - 0.8, poleY = (y0 + y1) / 2;
+    for (let pz = zDeck; pz <= zDeck + 0.95; pz += step) {
+      this.renderer.plot(pole1X, poleY, pz, this.renderer.rampOf(this.POLE)[2]);
+      this.renderer.plot(pole2X, poleY, pz, this.renderer.rampOf(this.POLE)[2]);
+    }
+    const ropeZ = zDeck + 0.90;
+    for (let rx = pole1X; rx <= pole2X; rx += step) {
+      this.renderer.plot(rx, poleY, ropeZ, this.renderer.rampOf(this.ROPE)[3]);
+    }
+    // 3 Tiny hanging clothes on neighbor's line
+    const miniClothes = [
+      { x: pole1X + 0.5, col: this.renderer.rgb(225, 45, 55), w: 0.30, h: 0.38 },
+      { x: pole1X + 1.2, col: this.renderer.rgb(245, 245, 250), w: 0.28, h: 0.35 },
+      { x: pole1X + 1.8, col: this.renderer.rgb(35, 110, 225), w: 0.30, h: 0.34 },
+    ];
+    for (const c of miniClothes) {
+      for (let cx = c.x - c.w / 2; cx <= c.x + c.w / 2; cx += step) {
+        for (let cz = ropeZ - c.h; cz <= ropeZ; cz += step) {
+          this.renderer.plot(cx, poleY, cz, c.col);
+        }
+      }
+    }
+  }
+
+  buildCoconutPalm(baseX, baseY, baseZ, topZ, leanX = 0, leanY = 0, numFronds = 8, seed = 0) {
+    const step = 0.07;
+    const trunkLen = topZ - baseZ;
+    const n = Math.ceil(trunkLen / step);
+
+    // Segmented curving trunk rooted in ground
+    let topX = baseX, topY = baseY;
+    for (let k = 0; k <= n; k++) {
+      const t = k / n;
+      const curX = baseX + Math.sin(t * Math.PI * 0.5) * leanX;
+      const curY = baseY + Math.sin(t * Math.PI * 0.5) * leanY;
+      const curZ = baseZ + t * trunkLen;
+      const r = this.renderer.lerp(0.18, 0.12, t);
+      const ring = Math.floor(t * 16) % 2 === 0;
+      this.renderer.sphere(curX, curY, curZ, r, ring ? [112, 90, 70] : [82, 64, 50], 'solid');
+      if (k === n) { topX = curX; topY = curY; }
+    }
+
+    // Coconut cluster under crown
+    for (let c = 0; c < 4; c++) {
+      const ca = c * (Math.PI / 2) + 0.3;
+      this.renderer.sphere(topX + Math.cos(ca) * 0.18, topY + Math.sin(ca) * 0.18, topZ - 0.10, 0.10, [86, 142, 50], 'solid');
+    }
+
+    // Radiating arching palm fronds
+    const frondCols = [[54, 126, 50], [76, 152, 58], [108, 176, 68], [135, 192, 78]];
+    for (let f = 0; f < numFronds; f++) {
+      const ang = (f / numFronds) * 6.283 + (this.renderer.hash(f, seed) - 0.5) * 0.22;
+      const frondLen = 1.30 + this.renderer.hash(f * 2, seed) * 0.30;
+      const col = frondCols[f % frondCols.length];
+      const fn = Math.ceil(frondLen / 0.08);
+
+      for (let s = 1; s <= fn; s++) {
+        const st = s / fn;
+        const dist = st * frondLen;
+        const fx = topX + Math.cos(ang) * dist;
+        const fy = topY + Math.sin(ang) * dist;
+        const fz = topZ + Math.sin(st * Math.PI * 0.75) * 0.32 - st * st * 0.44;
+        const fr = (0.14 * (1 - st * 0.42));
+        this.renderer.sphere(fx, fy, fz, fr, col, 'rough');
+      }
+    }
+  }
+
+  buildUtilityPoleAndWires() {
+    const step = 0.05;
+    const px = 7.6, py = -9.2;
+    const baseZ = -4.5, topZ = 1.45;
+
+    // Wooden vertical pole
+    for (let z = baseZ; z <= topZ; z += step) {
+      for (let dx = -0.06; dx <= 0.06; dx += step) {
+        for (let dy = -0.06; dy <= 0.06; dy += step) {
+          this.renderer.plot(px + dx, py + dy, z, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[Math.floor(z * 6) % 2 ? 1 : 2]);
+        }
+      }
+    }
+
+    // Horizontal crossarms (krusilya)
+    const armZ1 = 1.35, armZ2 = 0.85;
+    for (const az of [armZ1, armZ2]) {
+      for (let ax = px - 0.55; ax <= px + 0.55; ax += step) {
+        this.renderer.plot(ax, py, az, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[2]);
+      }
+      // White porcelain insulators on crossarm tips
+      for (const ix of [px - 0.50, px - 0.20, px + 0.20, px + 0.50]) {
+        this.renderer.sphere(ix, py, az + 0.07, 0.05, [245, 245, 252], 'solid');
+      }
+    }
+
+    // Distribution transformer (transpormer)
+    const transX = px + 0.20, transY = py + 0.04, transZ = 0.65, transR = 0.18, transH = 0.45;
+    for (let ang = 0; ang < 6.28; ang += 0.14) {
+      for (let z = 0; z <= transH; z += step) {
+        this.renderer.plot(transX + Math.cos(ang) * transR, transY + Math.sin(ang) * transR, transZ + z, this.renderer.rampOf(this.DARK)[2]);
+      }
+    }
+
+    // Sagging electrical wires (kawad ng kuryente)
+    const wireColor = this.renderer.rgb(28, 26, 24);
+    const drawWire = (x0, y0, z0, x1, y1, z1, sag = 0.24) => {
+      const dist = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
+      const steps = Math.ceil(dist / 0.08);
+      for (let k = 0; k <= steps; k++) {
+        const t = k / steps;
+        const wx = this.renderer.lerp(x0, x1, t);
+        const wy = this.renderer.lerp(y0, y1, t);
+        const wz = this.renderer.lerp(z0, z1, t) - Math.sin(t * Math.PI) * sag;
+        this.renderer.plot(wx, wy, wz, wireColor);
+      }
+    };
+
+    // Wires draping from pole to House 1, House 3, and off-screen
+    drawWire(px - 0.50, py, armZ1 + 0.07, 3.8, -10.2, 0.20, 0.24);
+    drawWire(px + 0.50, py, armZ1 + 0.07, 14.5, -9.5, -0.20, 0.22);
+    drawWire(px - 0.20, py, armZ2 + 0.07, -4.5, -10.5, 0.10, 0.28);
+    drawWire(px + 0.20, py, armZ2 + 0.07, 17.5, -8.0, 0.25, 0.24);
+  }
+
+  buildDistantSkyline() {
+    // Distant horizon kept open to emphasize wide Philippine tropical sky and floating cumulus
+  }
+
+  buildNeighbors() {
+    this.buildDistantSkyline();
+
+    // 1. House 1: Right-Center, Bangketa Red Yero Gable Roof (Aling Marites)
+    this.buildHouseBody(1.0, 6.8, -9.8, -13.2, -4.5, -0.80, this.NEIGHBOR_WALL_CREAM, 21, {
+      numWindows: 2,
+    });
+    this.buildCorrugatedGableRoof(1.0, 6.8, -9.8, -13.2, -0.80, 0.10, this.NEIGHBOR_ROOF_RED, 22, true);
+
+    // 2. House 2: Left-Center, Barangay Green Yero Gable Roof (Mang Cardo)
+    this.buildHouseBody(-7.5, -1.2, -10.0, -13.4, -4.5, -0.85, this.NEIGHBOR_WALL_MINT, 31, {
+      numWindows: 2,
+    });
+    this.buildCorrugatedGableRoof(-7.5, -1.2, -10.0, -13.4, -0.85, 0.05, this.NEIGHBOR_ROOF_GREEN, 32, true);
+
+    // 3. House 3: Far-Right Azotea Flat Roofdeck with Rebars & Mini Clothesline
+    this.buildAzoteaHouse(8.5, 15.5, -9.2, -13.0, -4.5, -0.75, this.PLASTER, 41);
+
+    // 4. House 4: Far-Left Ancestral Wooden 2nd-floor with Galvanized Silver Skillion Roof
+    this.buildHouseBody(-17.0, -8.8, -9.5, -13.2, -4.5, -0.90, this.NEIGHBOR_WOOD, 51, {
+      numWindows: 2,
+    });
+    this.buildCorrugatedShedRoof(-17.0, -8.8, -9.5, -13.2, -1.05, -0.45, this.NEIGHBOR_ROOF_SILVER, 52);
+
+    // 5. Coconut Palms rooted in ground at z = -4.5
+    this.buildCoconutPalm(-0.1, -10.5, -4.5, 0.95, 0.30, -0.15, 9, 61);
+    this.buildCoconutPalm(-13.2, -9.8, -4.5, 0.75, -0.32, -0.12, 8, 62);
+    this.buildCoconutPalm(15.2, -9.5, -4.5, 0.70, 0.32, -0.12, 8, 63);
+
+    // 6. Utility Pole & Wires
+    this.buildUtilityPoleAndWires();
+  }
+
   buildWalls() {
     const step = 0.045;
-    for (let x = -this.ROOF_X; x <= this.ROOF_X; x += step) {
+    for (let x = -this.ROOF_X - 1.5; x <= this.ROOF_X + 1.5; x += step) {
       for (let z = 0; z >= -this.WALL_DEPTH; z -= step) this.wallPixel(x, this.ROOF_Y, z, x, 3);
     }
     for (let y = -this.ROOF_Y; y <= this.ROOF_Y; y += step) {
@@ -684,7 +1057,7 @@ class SampayanGame {
 
   bake() {
     this.renderer.zb.fill(-1e9);
-    this.renderer.pix.fill(this.renderer.rgb(255, 255, 255));
+    this.initSkyAndGround();
     const W = this.renderer.width, H = this.renderer.height;
 
     for (let iy = 0; iy < H; iy++) {
@@ -702,6 +1075,7 @@ class SampayanGame {
     }
 
     this.renderer.groundZ.set(this.renderer.zb);
+    this.buildNeighbors();
     this.buildWalls();
     this.buildRoof();
     this.renderer.bakeOcclusion();

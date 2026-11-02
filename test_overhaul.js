@@ -23,10 +23,13 @@ const canvasMock = {
     stroke: () => {},
     fill: () => {},
     arc: () => {},
+    rect: () => {},
+    clip: () => {},
     measureText: (text) => ({ width: text.length * 6 }),
     drawImage: () => {},
     clearRect: () => {},
     setTransform: () => {},
+    setLineDash: () => {},
     createImageData: (w, h) => ({
       width: w,
       height: h,
@@ -509,6 +512,56 @@ console.log('\n--- Test 10: Tsinelas Threat Meter & Bilingual Naming ---');
   console.log('✓ Tsinelas Rage activation and bilingual dictionary mappings verified');
 }
 
+// TEST SUITE 11: Dynamic Tropical Sky & Neighboring Barrio Houses Background
+console.log('\n--- Test 11: Dynamic Tropical Sky & Neighboring Barrio Houses Background ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  // 1. Verify Sky and Ground Initialization
+  const skyPixelIdx = 5 * renderer.width + 20; // Top sky pixel (iy = 5, ix = 20)
+  assert(renderer.zb[skyPixelIdx] < -1e8, 'Sky pixel must have background depth');
+  const skyColor = renderer.pix[skyPixelIdx];
+  const skyR = skyColor & 255;
+  const skyG = (skyColor >> 8) & 255;
+  const skyB = (skyColor >> 16) & 255;
+
+  assert(skyB > skyR && skyB > skyG, 'Sky pixel at top must be tropical blue');
+  assert(!(skyR === 255 && skyG === 255 && skyB === 255), 'Sky pixel must NOT be plain white');
+
+  // 2. Verify Neighboring Houses in Depth Buffer
+  // Check behind main house parapet (e.g. House 1 at ix = 312, iy = 54)
+  const neighborPixelIdx = 54 * renderer.width + 312;
+  assert(renderer.zb[neighborPixelIdx] > -1e8, 'Neighboring house geometry must populate depth buffer');
+
+  // 3. Verify Storm Grading on Sky Pixels
+  const calmSkyCol = renderer.pix[skyPixelIdx];
+  renderer.gradeStorm(0.9, 0, 0, 0, null);
+  const stormSkyCol = renderer.pix[skyPixelIdx];
+  assert.notStrictEqual(calmSkyCol, stormSkyCol, 'Sky pixels must dynamically grade during storms');
+
+  // 4. Verify Lightning Flash Illuminates Sky
+  renderer.clear();
+  renderer.gradeStorm(0.9, 0, 0, 1.0, null);
+  const flashSkyCol = renderer.pix[skyPixelIdx];
+  const flashB = (flashSkyCol >> 16) & 255;
+  const stormB = (stormSkyCol >> 16) & 255;
+  assert(flashB > stormB && flashB >= 200, 'Lightning flash must illuminate sky pixels');
+
+  // 5. Verify Full Game Draw Loop with New Background
+  game.start();
+  game.draw();
+  game.startRound(2);
+  game.draw();
+  game.startRound(3);
+  game.strike();
+  game.draw();
+
+  console.log('✓ Dynamic tropical sky gradient and neighboring barrio houses verified');
+}
+
 console.log('\n=================================================');
-console.log('ALL 10 VERIFICATION SUITES PASSED FLAWLESSLY! ✓✓✓');
+console.log('ALL 11 VERIFICATION SUITES PASSED FLAWLESSLY! ✓✓✓');
 console.log('=================================================');
+

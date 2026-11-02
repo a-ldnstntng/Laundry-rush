@@ -434,7 +434,32 @@ class SampayanRenderer {
     for (let iy = 0; iy < this.height; iy++) {
       for (let ix = 0; ix < this.width; ix++) {
         const i = iy * this.width + ix;
-        if (this.zb[i] < -1e8) continue;
+        if (this.zb[i] < -1e8) {
+          if (storm > 0 || flash > 0) {
+            const c = this.pix[i];
+            let r = c & 255, g = (c >> 8) & 255, b = (c >> 16) & 255;
+            if (storm > 0) {
+              const skyT = Math.min(1, iy / 120);
+              const targetR = 52 + skyT * 26;
+              const targetG = 58 + skyT * 28;
+              const targetB = 76 + skyT * 32;
+              r = this.lerp(r, targetR, storm * 0.82);
+              g = this.lerp(g, targetG, storm * 0.82);
+              b = this.lerp(b, targetB, storm * 0.78);
+              if (iy < 130 && this.cloudCells[(iy >> 3) * this.cellsW + (ix >> 3)] + this.bayerAt(ix, iy) * 0.22 > 1 - storm * 0.60) {
+                r *= 0.84; g *= 0.84; b *= 0.88;
+              }
+            }
+            if (flash > 0) {
+              const k = Math.min(1, flash * 0.92);
+              r = this.lerp(r, 240, k);
+              g = this.lerp(g, 242, k);
+              b = this.lerp(b, 255, k);
+            }
+            this.pix[i] = this.rgb(r, g, b);
+          }
+          continue;
+        }
         const c = this.pix[i];
         let r = (c & 255) * rm + ra, g = (c >> 8 & 255) * gm + ga, b = (c >> 16 & 255) * bm + ba;
         if (this.cloudCells[(iy >> 3) * this.cellsW + (ix >> 3)] + this.bayerAt(ix, iy) * 0.22 > 1 - storm * 0.62) {
@@ -450,9 +475,10 @@ class SampayanRenderer {
           }
         }
         if (flashAmt > 0) {
-          r = this.lerp(r, 244, flashAmt);
-          g = this.lerp(g, 244, flashAmt);
-          b = this.lerp(b, 255, flashAmt);
+          const k = Math.min(1, flashAmt * 1.8);
+          r = this.lerp(r, 244, k);
+          g = this.lerp(g, 244, k);
+          b = this.lerp(b, 255, k);
         }
         this.pix[i] = this.rgb(r, g, b);
       }
@@ -461,9 +487,16 @@ class SampayanRenderer {
 
   drawClouds(storm, windT, clouds) {
     const isFair = storm <= 0.05;
-    const ramp = this.rampOf(isFair ? [226, 222, 212] : this.cloud);
+    const cloudCol = isFair
+      ? [242, 240, 234]
+      : [
+          this.lerp(242, 70, storm),
+          this.lerp(240, 75, storm),
+          this.lerp(234, 95, storm)
+        ];
+    const ramp = this.rampOf(cloudCol);
     for (const c of clouds) {
-      const show = isFair ? 0.55 : this.clamp(storm * 1.5 - c.from * 0.6, 0, 1);
+      const show = isFair ? 0.65 : this.clamp(storm * 1.5 - c.from * 0.5, 0, 1);
       if (show <= 0) continue;
       const speedMul = isFair ? 0.65 : 1.0;
       const cx = 30 + ((c.x + windT * c.speed * speedMul) % (this.width - 60));
