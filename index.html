@@ -59,7 +59,7 @@
     0% { background-position: 0px 0px, 0 0; }
     100% { background-position: -160px 32px, 0 0; }
   }
-  canvas {
+  #c {
     display: block;
     image-rendering: pixelated;
     touch-action: none;
@@ -69,7 +69,15 @@
     border: 4px solid var(--ink);
     background: #2e7ee6;
   }
-  canvas:active { cursor: grabbing; }
+  #c:active { cursor: grabbing; }
+
+  #hud-tsinelas-canvas {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+  }
 
   /* In-Game HUD */
   #hud {
@@ -79,20 +87,25 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
     z-index: 10;
   }
   .hud-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    column-gap: 6px;
+    width: 100%;
+    max-width: 100%;
   }
   .hud-controls-group {
     display: flex;
     align-items: center;
     gap: 6px;
     pointer-events: auto;
+    flex-shrink: 0;
   }
   .hud-controls-group button {
     pointer-events: auto;
@@ -109,6 +122,7 @@
     gap: 5px;
     pointer-events: none;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .hud-pill b {
     font-size: 10px;
@@ -800,6 +814,27 @@
     display: none !important;
   }
 
+  /* Responsive HUD and Screen adjustments */
+  @media (max-width: 992px) {
+    .hud-top {
+      gap: 5px;
+      row-gap: 5px;
+    }
+    .hud-pill {
+      padding: 4px 6px;
+      font-size: 7.5px;
+    }
+    .hud-pill b {
+      font-size: 9px;
+    }
+    .weather-bar-container {
+      width: 62px;
+    }
+    .tsinelas-bar-container {
+      width: 44px;
+    }
+  }
+
   /* Mobile Responsive adjustments */
   @media (max-width: 600px) {
     .title-logo { font-size: 24px; margin-bottom: 8px; }
@@ -940,8 +975,8 @@
       <li id="rule-item-1"><strong>Drag or Flick Toss</strong>: Pull clothes into the tub, or flick fast for a +15 "Shoot sa Batya!" bonus!</li>
       <li id="rule-item-2"><strong>Garment Weights & Multi-Carry</strong>: Light items allow multi-carry! Heavy clothes (blankets/uniforms) have 2 clothespins to snap off.</li>
       <li id="rule-item-3"><strong>Nanay's Urgent Utos</strong>: Bank the glowing priority garment before time runs out for a 3x score multiplier!</li>
-      <li id="rule-item-4"><strong>Rooftop Hazards</strong>: Click Munin the cat ("Tsupe!") before he soils clothes, and watch out for Mang Boy's BBQ smoke!</li>
-      <li id="rule-item-5"><strong>Tsinelas Threat Meter</strong>: Soiled clothes and slow saves raise Nanay's rage! Keep it low or the flying slipper strikes!</li>
+      <li id="rule-item-4"><strong>Rooftop Hazards & Batya Defense</strong>: Click Munin, Siopao, or Kitkit ("Tsupe!") before they tip the laundry tub or soil clothes, and watch out for Mang Boy's BBQ smoke (heed the big warning exclamation mark on that lane)!</li>
+      <li id="rule-item-5"><strong>Tsinelas Flying Slipper</strong>: Soiled clothes and slow saves raise Nanay's rage! At 100%, her red Spartan flying slipper hurls across the roof, slapping clothes out of your hands!</li>
       <li id="rule-item-6"><strong>Air Rescue & Golden Peg</strong>: Snatch blown clothes mid-air (+10) and grab the Golden Peg to freeze storm time!</li>
       <li id="rule-item-7"><strong>Keyboard Controls</strong>: Press [SPACE] or [ENTER] to auto-grab, [P] to Pause/Resume, and [R] to Restart.</li>
     </ol>
@@ -1134,8 +1169,8 @@
       rule1: "<strong>Drag or Flick Toss</strong>: Pull clothes into the tub, or flick fast for a +15 \"Shoot sa Batya!\" bonus!",
       rule2: "<strong>Garment Weights & Multi-Carry</strong>: Light items allow multi-carry! Heavy clothes (blankets/uniforms) have 2 clothespins to snap off.",
       rule3: "<strong>Nanay's Urgent Utos</strong>: Bank the glowing priority garment before time runs out for a 3x score multiplier!",
-      rule4: "<strong>Rooftop Hazards</strong>: Click Munin the cat (\"Tsupe!\") before he soils clothes, and watch out for Mang Boy's BBQ smoke!",
-      rule5: "<strong>Tsinelas Threat Meter</strong>: Soiled clothes and slow saves raise Nanay's rage! Keep it low or the flying slipper strikes!",
+      rule4: "<strong>Rooftop Hazards & Batya Defense</strong>: Click Munin, Siopao, or Kitkit (\"Tsupe!\") before they tip the laundry tub or soil clothes, and watch out for Mang Boy's BBQ smoke (heed the big warning exclamation mark on that lane)!",
+      rule5: "<strong>Tsinelas Flying Slipper</strong>: Soiled clothes and slow saves raise Nanay's rage! At 100%, her red Spartan flying slipper hurls across the roof, slapping clothes out of your hands!",
       rule6: "<strong>Air Rescue & Golden Peg</strong>: Snatch blown clothes mid-air (+10) and grab the Golden Peg to freeze storm time!",
       rule7: "<strong>Keyboard Controls</strong>: Press [SPACE] or [ENTER] to auto-grab, [P] to Pause/Resume, and [R] to Restart.",
       startNow: "START GAME",
@@ -1208,8 +1243,8 @@
       rule1: "<strong>I-drag o I-flick Shoot</strong>: Hilahin ang damit sa planggana o i-flick pataas para sa +15 \"Shoot sa Batya!\" bonus!",
       rule2: "<strong>Timbang at Dalawang Sipit</strong>: Pwede pagsabayin ang magagaang damit! Ang kumot at uniporme ay may 2 sipit na dapat baklasin.",
       rule3: "<strong>Urgent Utos ni Nanay</strong>: Iligpit agad ang damit na may gintong target bago maubos ang oras para sa 3x puntos!",
-      rule4: "<strong>Pusang Gala at Usok</strong>: I-click si Munin ang pusa (\"Tsupe!\") bago niya marumihan ang labada, at iwasan ang usok ng ihaw-ihaw!",
-      rule5: "<strong>Galit ng Tsinelas</strong>: Tumataas ang galit ni Nanay kapag nadumihan o nabasa ang damit! Huwag punuin kundi lilipad ang spartan!",
+      rule4: "<strong>Pusang Gala at Depensa sa Batya</strong>: I-click si Munin, Siopao, o Kitkit (\"Tsupe!\") bago nila maitumba ang batya o madumihan ang damit, at mag-ingat sa usok ng ihaw (pansinin ang malaking babalang exclamation mark sa sampayan)!",
+      rule5: "<strong>Lilipad na Spartan Tsinelas</strong>: Tumataas ang galit ni Nanay sa maduming damit! Sa 100%, lilipad ang pulang spartan at tatabigin ang damit sa kamay mo!",
       rule6: "<strong>Salag sa Hangin at Gintong Sipit</strong>: Saluhin ang damit sa ere para sa +10 bonus! Hulihin ang Gintong Sipit para itigil ang unos!",
       rule7: "<strong>Keyboard Shortcuts</strong>: Pindutin ang [SPACE]/[ENTER] para sa auto-salba, [P] para i-Pause, at [R] para Ulitin.",
       startNow: "MAGSIMULA NA",

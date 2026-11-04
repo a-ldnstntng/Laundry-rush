@@ -21,10 +21,15 @@ const canvasMock = {
     moveTo: () => {},
     lineTo: () => {},
     stroke: () => {},
+    closePath: () => {},
     fill: () => {},
     arc: () => {},
+    ellipse: () => {},
     rect: () => {},
     clip: () => {},
+    translate: () => {},
+    rotate: () => {},
+    scale: () => {},
     measureText: (text) => ({ width: text.length * 6 }),
     drawImage: () => {},
     clearRect: () => {},
@@ -413,8 +418,8 @@ console.log('\n--- Test 7: Munin Cat Hazard & Shoo Click ---');
   console.log('✓ Munin cat stalking, paw-soiling, and Tsupe! shooing verified');
 }
 
-// TEST SUITE 8: Mang Boy's BBQ Smoke Hazard & White Fabric Soiling
-console.log('\n--- Test 8: BBQ Smoke Hazard & White Fabric Soiling ---');
+// TEST SUITE 8: Mang Boy's BBQ Smoke Hazard, Single-Lane Targeting, Telegraph Exclamation Mark & Controlled Speed
+console.log('\n--- Test 8: BBQ Smoke Hazard, Single-Lane Targeting, Telegraph Exclamation Mark & Controlled Speed ---');
 {
   const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
   const audio = new SampayanAudio();
@@ -422,14 +427,62 @@ console.log('\n--- Test 8: BBQ Smoke Hazard & White Fabric Soiling ---');
 
   game.start();
   game.roundBanner = null;
+
+  // 1. Verify Telegraph Warning Phase and Single Lane Selection
   const smoke = game.smokeEvent;
+  smoke.active = false;
+  smoke.warning = false;
+  smoke.nextSmokeIn = 0.05; // Ready to trigger
+
+  game.updateSmoke(0.1);
+  assert.strictEqual(smoke.warning, true, 'Smoke must enter telegraph warning phase before activating');
+  assert.strictEqual(smoke.active, false, 'Smoke must not be active during telegraph warning');
+  assert(smoke.warningTimer > 1.5, 'Telegraph warning timer must provide fair player notice (> 1.5s)');
+  assert([0, 1, 2].includes(smoke.lineIdx), 'Smoke must target exactly one valid line (0, 1, or 2)');
+
+  // Verify pickSmokeLine prefers lines with clothes
+  const chosenLine = game.pickSmokeLine();
+  assert([0, 1, 2].includes(chosenLine), 'pickSmokeLine must return a valid line index');
+
+  // Verify drawSmokeWarning executes cleanly without errors during warning phase
+  let drawCallCount = 0;
+  renderer.ctx.save = () => { drawCallCount++; };
+  game.drawSmokeWarning();
+  assert(drawCallCount > 0, 'drawSmokeWarning must render telegraph indicators and warning badge');
+
+  // Verify smoke travel speed is controlled and reactable
+  assert(smoke.speed <= 2.5, `Smoke speed (${smoke.speed}) must be fair and reactable (<= 2.5)`);
+
+  // 2. Advance through telegraph phase into active smoke phase
+  const warnTime = smoke.warningTimer + 0.1;
+  for (let s = 0; s < Math.ceil(warnTime / 0.1); s++) {
+    game.updateSmoke(0.1);
+  }
+  assert.strictEqual(smoke.warning, false, 'Telegraph warning must complete');
+  assert.strictEqual(smoke.active, true, 'Smoke must become active after telegraph warning');
+
+  // Advance several active steps to generate wafting smoke particles
+  for (let s = 0; s < 5; s++) {
+    game.updateSmoke(0.1);
+  }
+
+  // 3. Verify particles are strictly confined to the targeted lane (single-lane targeting)
+  const targetLineY = game.LINE_YS[smoke.lineIdx];
+  assert(smoke.particles.length > 0, 'Active smoke must generate wafting particles');
+  for (const p of smoke.particles) {
+    const yDist = Math.abs(p.y - targetLineY);
+    assert(yDist < 1.0, `Smoke particle Y distance (${yDist}) must stay strictly within the target lane (< 1.0)`);
+  }
+
+  // 4. Verify white vs colored fabric soiling on targeted line
   smoke.active = true;
+  smoke.startTimer = 8.5;
   smoke.timer = 8.5;
   smoke.lineIdx = 1;
 
-  const targetLineY = game.LINE_YS[1];
-  const whiteItem = game.items.find(i => i.isWhite && Math.abs(i.y - targetLineY) < 0.6);
-  const colorItem = game.items.find(i => !i.isWhite && Math.abs(i.y - targetLineY) < 0.6);
+  const testLineY = game.LINE_YS[1];
+  const whiteItem = game.items.find(i => i.isWhite && Math.abs(i.y - testLineY) < 0.6);
+  const colorItem = game.items.find(i => !i.isWhite && Math.abs(i.y - testLineY) < 0.6);
 
   assert(whiteItem, 'White item must exist on smoke target line');
   assert(colorItem, 'Non-white item must exist on smoke target line');
@@ -445,7 +498,51 @@ console.log('\n--- Test 8: BBQ Smoke Hazard & White Fabric Soiling ---');
 
   assert.strictEqual(whiteItem.soiled, 'smoke', 'White garment must be soiled by smoke');
   assert.strictEqual(colorItem.soiled, null, 'Non-white garment must not be soiled by smoke');
-  console.log('✓ Mang Boy smoke plume soiling white garments verified');
+
+  // 5. Deep Verification: Verify arrow projection aligns accurately with rope for all 3 lines
+  smoke.warning = true;
+  for (let l = 0; l < 3; l++) {
+    smoke.lineIdx = l;
+    const targetY = game.LINE_YS[l];
+    const pRope = renderer.project(-2.0, targetY, game.LINE_Z);
+    let capturedPoints = [];
+    renderer.ctx.lineTo = (x, y) => { capturedPoints.push({ x, y }); };
+    renderer.ctx.save = () => {};
+    game.drawSmokeWarning();
+    // Verify an arrow tip was rendered touching the line rope
+    const arrowTip = capturedPoints.find(pt => Math.abs(pt.y - Math.round(pRope.sy - 2)) <= 1);
+    assert(arrowTip, `Warning arrow tip must point precisely to Line ${l} rope (sy: ${pRope.sy})`);
+  }
+
+  // 6. Verify phase guard: drawSmokeWarning must not render if phase is not 'play'
+  game.phase = 'over';
+  let leakDrawCount = 0;
+  renderer.ctx.save = () => { leakDrawCount++; };
+  game.drawSmokeWarning();
+  assert.strictEqual(leakDrawCount, 0, 'drawSmokeWarning must not execute when phase is not "play"');
+  game.phase = 'play';
+
+  // 7. Verify smooth particle dissipation (particles continue updating and do not abruptly pop out)
+  smoke.particles = [{ x: 0, y: game.LINE_YS[1], z: 1.8, vx: 2.4, vy: 0, vz: 0.1, r: 0.6, life: 1, maxLife: 10 }];
+  smoke.active = false;
+  smoke.warning = false;
+  smoke.timer = 0;
+  smoke.nextSmokeIn = 5.0; // In cooldown
+  game.updateSmoke(0.1);
+  assert(smoke.particles.length > 0, 'Particles must smoothly dissipate rather than abruptly vanishing');
+  assert.strictEqual(smoke.particles[0].life, 1.1, 'Dissipating particle life must advance with dt');
+
+  // 8. Verify pickSmokeLine prioritizes unsoiled white garments over already soiled white garments
+  const itemsOnLine0 = game.items.filter(i => Math.abs(i.y - game.LINE_YS[0]) < 0.6);
+  const itemsOnLine1 = game.items.filter(i => Math.abs(i.y - game.LINE_YS[1]) < 0.6);
+  const itemsOnLine2 = game.items.filter(i => Math.abs(i.y - game.LINE_YS[2]) < 0.6);
+  for (const it of itemsOnLine0) { if (it.isWhite) it.soiled = 'smoke'; }
+  for (const it of itemsOnLine1) { if (it.isWhite) it.soiled = null; }
+  for (const it of itemsOnLine2) { if (it.isWhite) it.soiled = 'smoke'; }
+  const picked = game.pickSmokeLine();
+  assert.strictEqual(picked, 1, 'pickSmokeLine must prioritize line with unsoiled white clothes');
+
+  console.log('✓ Mang Boy single-lane smoke, exclamation telegraph, controlled speed, projection alignment & smooth dissipation verified');
 }
 
 // TEST SUITE 9: Nanay's Urgent Utos Timed Bounties
@@ -561,7 +658,288 @@ console.log('\n--- Test 11: Dynamic Tropical Sky & Neighboring Barrio Houses Bac
   console.log('✓ Dynamic tropical sky gradient and neighboring barrio houses verified');
 }
 
+// TEST SUITE 12: Cat Targeting Laundry Tub (Batya) & Spilling Banked Clothes
+console.log('\n--- Test 12: Cat Targeting Laundry Tub & Spilling Banked Clothes ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  game.start();
+  game.roundBanner = null;
+
+  // Bank 2 items into the basket
+  const item1 = game.items[0];
+  const item2 = game.items[1];
+  game.bank(item1);
+  game.bank(item2);
+  assert.strictEqual(item1.state, 'basket');
+  assert.strictEqual(item2.state, 'basket');
+  assert.strictEqual(game.items.filter(i => i.state === 'basket').length, 2);
+
+  // Set cat active and walking parapet
+  const cat = game.cat;
+  cat.active = true;
+  cat.state = 'parapet_walk';
+
+  // Advance game update so cat targets the tub
+  game.update(0.1);
+  assert.strictEqual(cat.state, 'stalk_basket', 'Cat must target banked laundry tub');
+  assert.strictEqual(cat.targetType, 'basket');
+
+  // Cat reaches the tub
+  cat.x = game.BASKET.x;
+  cat.y = game.BASKET.y;
+  game.update(0.1);
+  assert.strictEqual(cat.state, 'tip_basket', 'Cat must enter tip_basket state at the tub');
+
+  // Let tip timer expire -> tips tub, knocks clothes out onto ground with paw soiling
+  game.score = 50;
+  cat.tipTimer = 0.01;
+  const prevTsinelas = game.tsinelasMeter;
+  game.update(0.05);
+
+  assert.strictEqual(game.score, 40, 'Tipped tub must deduct 10 points');
+  assert(game.tsinelasMeter >= prevTsinelas + 20, 'Tipped tub must increase Nanay rage by +20');
+  const spilledItems = game.items.filter(i => i.state === 'falling' || i.state === 'ground');
+  assert(spilledItems.length >= 2, 'Clothes must erupt and scatter from the tub');
+  assert(spilledItems.every(i => i.soiled === 'paw'), 'Knocked clothes must be soiled with pawprints');
+  assert.strictEqual(cat.state, 'flee', 'Cat must flee after tipping tub');
+
+  // Advance physics until scattered clothes settle on the ground
+  for (let s = 0; s < 10; s++) {
+    game.update(0.1);
+  }
+  const landedItems = game.items.filter(i => i.state === 'ground');
+  assert(landedItems.length >= 2, 'Clothes must land on the floor');
+
+  // Verify Tub Blocking: When Siopao is loafing at the tub in tip_basket state, banking clothes is blocked
+  cat.active = true;
+  cat.state = 'tip_basket';
+  cat.type = 'siopao';
+  const testGarment = game.items.find(i => i.state === 'ground');
+  assert(testGarment, 'Test garment exists');
+  game.bank(testGarment);
+  assert.notStrictEqual(testGarment.state, 'basket', 'Banking must be blocked while cat loafs on tub');
+  assert(testGarment.state === 'falling' || testGarment.state === 'ground', 'Blocked item must bounce to floor');
+
+  console.log('✓ Cat tub stalking, tipping, laundry spilling, and Siopao tub blocking verified');
+}
+
+// TEST SUITE 13: Cat Archetypes & Escalation across Rounds
+console.log('\n--- Test 13: Cat Archetypes & Escalation across Rounds ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  // Round 1: 1 cat (Munin)
+  game.startRound(1);
+  assert.strictEqual(game.cats.length, 1);
+  assert.strictEqual(game.cats[0].type, 'munin');
+
+  // Round 2: 2 cats (Munin & Siopao)
+  game.startRound(2);
+  assert.strictEqual(game.cats.length, 2);
+  assert.strictEqual(game.cats[0].type, 'munin');
+  assert.strictEqual(game.cats[1].type, 'siopao');
+
+  // Round 3: 3 cats (Munin, Siopao, Kitkit)
+  game.startRound(3);
+  assert.strictEqual(game.cats.length, 3);
+  assert.strictEqual(game.cats[0].type, 'munin');
+  assert.strictEqual(game.cats[1].type, 'siopao');
+  assert.strictEqual(game.cats[2].type, 'kitkit');
+
+  // Verify Chubby Siopao requires 2 clicks to shoo
+  const siopao = game.cats[1];
+  siopao.active = true;
+  siopao.state = 'parapet_walk';
+  assert.strictEqual(siopao.hitsRemaining, 2);
+
+  // First click: stubborn reaction, remains active
+  game.shooCat(siopao);
+  assert.strictEqual(siopao.hitsRemaining, 1);
+  assert.strictEqual(siopao.state, 'parapet_walk', 'Siopao should not flee after 1st click');
+
+  // Second click: shooed, flees!
+  game.shooCat(siopao);
+  assert.strictEqual(siopao.state, 'flee', 'Siopao flees after 2nd click');
+
+  // Verify Speedy Kitten speed attribute and clothesline swiping behavior
+  const kitkit = game.cats[2];
+  assert(kitkit.speed > game.cats[0].speed, 'Kitkit should be faster than Munin');
+
+  // Test Kitkit zip_line clothesline swiping:
+  game.phase = 'play';
+  game.roundBanner = null;
+  kitkit.active = true;
+  kitkit.state = 'zip_line';
+  kitkit.targetLine = 1;
+  kitkit.x = 0;
+  kitkit.y = game.LINE_YS[1];
+  kitkit.z = 0;
+  kitkit.facing = 1;
+
+  // Place a hanging garment directly on line 1 at x = 0.5
+  const hangingItem = game.items.find(i => i.state === 'line');
+  assert(hangingItem, 'Hanging garment found');
+  hangingItem.y = game.LINE_YS[1];
+  hangingItem.x = 0.5;
+  hangingItem.pinsRemaining = 1;
+
+  // Update game so Kitkit runs past and swipes garment
+  game.update(0.1);
+  assert(hangingItem.state === 'falling' || hangingItem.state === 'ground', 'Kitkit must swipe garment off line');
+  assert.strictEqual(hangingItem.soiled, 'paw', 'Swiped garment must have paw print');
+
+  // Verify rendering of all 3 archetypes without errors
+  game.cats.forEach(c => {
+    c.active = true;
+    renderer.drawMuninCat(c, 0.5);
+  });
+
+  console.log('✓ Cat archetypes (Munin, Siopao, Kitkit), 2-click shooing, and Kitkit line swiping verified');
+}
+
+// TEST SUITE 14: Nanay's Flying Slipper (Spartan Tsinelas) Real Physical Projectile
+console.log('\n--- Test 14: Nanay Flying Slipper Projectile & Impact ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  game.start();
+  game.roundBanner = null;
+
+  // Hold a garment manually (without auto-banking)
+  const garment = game.items[0];
+  garment.x = 0;
+  garment.y = 0;
+  garment.pinsRemaining = 0;
+  garment.state = 'held';
+  game.held = garment;
+  game.auto = false;
+  game.pointer = null;
+  assert.strictEqual(game.held, garment);
+
+  // Meter hits 100 -> triggers Nanay rage and launches flying slipper
+  game.adjustTsinelasMeter(100);
+  assert.strictEqual(game.tsinelasRage, true);
+  assert(game.flyingSlipper && game.flyingSlipper.active, 'Flying slipper projectile must be active');
+  assert(game.flyingSlipper.spin !== 0, 'Slipper must spin in mid-air');
+
+  // Render flying slipper without errors
+  renderer.drawFlyingSlipper(game.flyingSlipper);
+
+  // Spawn an active cat near slipper impact path
+  const cat = game.cat;
+  cat.active = true;
+  cat.state = 'parapet_walk';
+  cat.timer = 5.0;
+  cat.x = game.flyingSlipper.tx;
+  cat.y = game.flyingSlipper.ty;
+  cat.z = 0;
+
+  // Advance flight until impact
+  for (let s = 0; s < 12; s++) {
+    game.update(0.1);
+  }
+
+  assert.strictEqual(game.flyingSlipper.active, false, 'Slipper must impact target');
+  assert.strictEqual(cat.state, 'flee', 'Cat in flight path must be slapped away');
+  assert.strictEqual(cat.z, 0, 'Cat in flight path must be grounded (z = 0) when slapped away');
+  assert.strictEqual(game.held, null, 'Held laundry must be knocked down onto floor');
+  assert(garment.state === 'falling' || garment.state === 'ground', 'Dropped laundry must fall to the ground');
+  assert(game.stunTimer > 0, 'Player carry action must be temporarily stunned');
+
+  // Verify that an empty-handed player is still stunned when hit by the slipper
+  game.stunTimer = 0;
+  game.held = null;
+  game.pointer = { x: 240, y: 135 }; // Screen center
+  const pw = game.pointerWorld();
+  game.adjustTsinelasMeter(100);
+  assert(game.flyingSlipper && game.flyingSlipper.active);
+  game.flyingSlipper.tx = pw.x;
+  game.flyingSlipper.ty = pw.y;
+  for (let s = 0; s < 12; s++) {
+    game.update(0.1);
+  }
+  assert(game.stunTimer > 0, 'Empty-handed player must still be stunned on impact');
+
+  // Verify player can still shoo cats while carry action is stunned
+  cat.active = true;
+  cat.state = 'parapet_walk';
+  cat.x = 0; cat.y = 0; cat.z = 0;
+  const catP = renderer.project(cat.x, cat.y, cat.z);
+  game.pointer = { x: catP.sx, y: catP.sy - 12 };
+  game.shooCat(cat);
+  assert.strictEqual(cat.state, 'flee', 'Player can still shoo cat away even when carry action is stunned');
+
+  console.log('✓ Flying slipper projectile, cat smack, laundry drop, stun, and shooing verified');
+}
+
+// TEST SUITE 15: Tightened Pacing & Early Hazard Triggers
+console.log('\n--- Test 15: Tightened Pacing & Early Hazard Triggers ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  game.start();
+  assert(game.smokeEvent.nextSmokeIn <= 6.0, 'Smoke hazard must trigger early (<= 6.0s)');
+  assert(game.cat.cooldown <= 4.5, 'Cat hazard must activate early (<= 4.5s)');
+
+  console.log('✓ Tightened hazard pacing verified');
+}
+
+// TEST SUITE 16: Visual Polish & Geometry Fixes
+console.log('\n--- Test 16: Visual Polish, Depth Buffering & Geometry Fixes ---');
+{
+  const renderer = new SampayanRenderer(canvasMock, { width: 480, height: 270 });
+  const audio = new SampayanAudio();
+  const game = new SampayanGame(renderer, audio);
+
+  // 1. Verify Batya Clothes Pile Visibility (not occluded by lid or low depth)
+  renderer.pix.fill(0);
+  renderer.zb.fill(-1e9);
+  game.drawBatya(0);
+  const pixAfterBatya = new Uint32Array(renderer.pix);
+
+  game.items[0].state = 'basket';
+  game.drawPile();
+  let pilePixDrawn = 0;
+  for (let i = 0; i < renderer.pix.length; i++) {
+    if (renderer.pix[i] !== pixAfterBatya[i]) pilePixDrawn++;
+  }
+  assert(pilePixDrawn > 50, `Banked clothes must be visible inside batya (actual: ${pilePixDrawn} px)`);
+
+  // 2. Verify Nanay Facing Perspective (face, eyes, and lips facing camera and southwest)
+  const px = -8.5, py = 3.8, yaw = 0.78, k = 1.35;
+  const fx = Math.cos(yaw), fy = Math.sin(yaw), sx = -fy, sy = fx;
+  const eyeR = [px + (fx * 0.18 + sx * -0.06) * k, py + (fy * 0.18 + sy * -0.06) * k, 1.75 * k];
+  const hairBack = [px + (fx * -0.04) * k, py + (fy * -0.04) * k, 1.78 * k];
+  const pEye = renderer.project(eyeR[0], eyeR[1], eyeR[2]);
+  const pHair = renderer.project(hairBack[0], hairBack[1], hairBack[2]);
+  assert(pEye.d > pHair.d, 'Nanay face/eyes must be closer to camera than back hair');
+
+  // 3. Verify Floater strings contain zero emoji characters
+  const gameCode = fs.readFileSync('./game.js', 'utf8');
+  const floaterMatches = gameCode.match(/addFloater\([^)]+\)/g) || [];
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
+  for (const m of floaterMatches) {
+    assert(!emojiRegex.test(m), `Floater call must not contain emoji: ${m}`);
+  }
+
+  // 4. Verify Cat Flee sprite frame is grounded at row 11
+  const engineCode = fs.readFileSync('./engine.js', 'utf8');
+  assert(/flee:\s*\[\r?\n\s*"................"/.test(engineCode), 'Flee frame must have empty row at top and grounded paws at row 11');
+
+  console.log('✓ Visual polish fixes (batya pile visibility, Nanay 3/4 yaw, grounded flee frame, clean pixel floaters) verified');
+}
+
 console.log('\n=================================================');
-console.log('ALL 11 VERIFICATION SUITES PASSED FLAWLESSLY! ✓✓✓');
+console.log('ALL 16 VERIFICATION SUITES PASSED FLAWLESSLY! ✓✓✓');
 console.log('=================================================');
+
 

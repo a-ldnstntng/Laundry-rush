@@ -1,5 +1,38 @@
 'use strict';
 
+const CAT_ARCHETYPES = {
+  munin: {
+    type: 'munin',
+    name: 'Munin',
+    displayNameTl: 'Munin (Puspin)',
+    displayNameEn: 'Munin (Tabby)',
+    speed: 2.2,
+    maxHp: 1,
+    tipDelay: 2.0,
+    color: '#ea580c',
+  },
+  siopao: {
+    type: 'siopao',
+    name: 'Siopao',
+    displayNameTl: 'Siopao (Tabachingching)',
+    displayNameEn: 'Siopao (Chubby Calico)',
+    speed: 1.4,
+    maxHp: 2, // Chubby and stubborn: takes 2 clicks to shoo!
+    tipDelay: 2.7,
+    color: '#fef3c7',
+  },
+  kitkit: {
+    type: 'kitkit',
+    name: 'Kitkit',
+    displayNameTl: 'Kitkit (Kuting)',
+    displayNameEn: 'Kitkit (Speedy Kitten)',
+    speed: 3.5, // Fast kitten zipping under lines!
+    maxHp: 1,
+    tipDelay: 1.6,
+    color: '#1e293b',
+  },
+};
+
 /**
  * SampayanGame
  * Encapsulated game engine and state manager for Sampayan Rush ("Hala, May Ulan!").
@@ -186,37 +219,31 @@ class SampayanGame {
     this.swishScores = 0; // Number of Shoot sa Batya swish tosses
     this.utosCount = 0; // Number of completed Urgent Utos
 
-    // Tsinelas Threat Meter (0 to 100)
+    // Tsinelas Threat Meter (0 to 100) & Physical Slipper Strike
     this.tsinelasMeter = 0;
     this.tsinelasRage = false;
     this.tsinelasShake = 0;
+    this.stunTimer = 0;
+    this.flyingSlipper = null;
 
-    // Munin the Rooftop Puspin Cat Hazard
-    this.cat = {
-      active: false,
-      state: 'inactive', // 'inactive', 'parapet_walk', 'stalk', 'jump_line', 'knead_nap', 'flee'
-      x: -11,
-      y: 5.8,
-      z: 0.6,
-      vx: 0,
-      vy: 0,
-      targetItem: null,
-      targetLine: 1,
-      cooldown: 5.5,
-      timer: 0,
-      animTime: 0,
-      facing: 1,
-      napTimer: 0,
-    };
+    // Multiple Puspin Cat Variations across rounds (Munin, Siopao, Kitkit)
+    this.cats = [];
+    this.initCats(1);
 
-    // Usok ng Ihaw-Ihaw (Mang Boy's BBQ Smoke Hazard)
+    // Usok ng Ihaw-Ihaw (Mang Boy's BBQ Smoke Hazard) - Single-lane telegraph warning & fair travel speed
     this.smokeEvent = {
       active: false,
+      warning: false,
+      warningTimer: 0,
+      warningDuration: 2.4,
       timer: 0,
-      duration: 8.5,
+      duration: 12.0,
+      speed: 2.4,
       lineIdx: 1,
-      nextSmokeIn: 11.0,
+      nextSmokeIn: 4.5,
       particles: [],
+      startTimer: null,
+      elapsed: 0,
     };
 
     // Nanay's "Urgent Utos" Dynamic Timed Bounties
@@ -264,6 +291,65 @@ class SampayanGame {
     // Initial Rooftop Bake and hang clothes for title screen display
     this.bake();
     this.hangWashing();
+  }
+
+  get cat() {
+    return (this.cats && this.cats.length > 0) ? this.cats[0] : null;
+  }
+
+  set cat(val) {
+    if (!this.cats) this.cats = [];
+    if (this.cats.length === 0) {
+      this.cats.push(val);
+    } else {
+      this.cats[0] = val;
+    }
+  }
+
+  createCat(type = 'munin', options = {}) {
+    const arch = CAT_ARCHETYPES[type] || CAT_ARCHETYPES.munin;
+    return {
+      id: options.id !== undefined ? options.id : Math.floor(Math.random() * 10000),
+      type: arch.type,
+      name: arch.name,
+      displayNameTl: arch.displayNameTl,
+      displayNameEn: arch.displayNameEn,
+      speed: arch.speed,
+      maxHp: arch.maxHp,
+      hitsRemaining: arch.maxHp,
+      tipDelay: arch.tipDelay,
+      active: options.active !== undefined ? options.active : false,
+      state: options.state || 'inactive',
+      x: options.x !== undefined ? options.x : -11,
+      y: options.y !== undefined ? options.y : 5.8,
+      z: options.z !== undefined ? options.z : 0,
+      vx: 0,
+      vy: 0,
+      targetItem: null,
+      targetType: null,
+      targetLine: 1,
+      cooldown: options.cooldown !== undefined ? options.cooldown : (2.8 + Math.random() * 2.0),
+      timer: 0,
+      animTime: 0,
+      facing: 1,
+      napTimer: 0,
+      tipTimer: 0,
+      animShake: 0,
+    };
+  }
+
+  initCats(roundNum = 1) {
+    const archetypes = ['munin', 'siopao', 'kitkit'];
+    const count = roundNum === 1 ? 1 : (roundNum === 2 ? 2 : 3);
+    this.cats = [];
+    for (let i = 0; i < count; i++) {
+      const type = archetypes[i % archetypes.length];
+      const baseCooldown = roundNum === 1 ? 2.8 : (roundNum === 2 ? 1.8 : 1.2);
+      this.cats.push(this.createCat(type, {
+        id: i,
+        cooldown: baseCooldown + i * 3.0 + Math.random() * 1.5,
+      }));
+    }
   }
 
   setLanguage(lang) {
@@ -318,29 +404,22 @@ class SampayanGame {
     this.tsinelasMeter = 0;
     this.tsinelasRage = false;
     this.tsinelasShake = 0;
-    this.cat = {
-      active: false,
-      state: 'inactive',
-      x: -11,
-      y: 5.8,
-      z: 0.6,
-      vx: 0,
-      vy: 0,
-      targetItem: null,
-      targetLine: 1,
-      cooldown: 5.5,
-      timer: 0,
-      animTime: 0,
-      facing: 1,
-      napTimer: 0,
-    };
+    this.stunTimer = 0;
+    this.flyingSlipper = null;
+    this.initCats(1);
     this.smokeEvent = {
       active: false,
+      warning: false,
+      warningTimer: 0,
+      warningDuration: 2.4,
       timer: 0,
-      duration: 8.5,
+      duration: 12.0,
+      speed: 2.4,
       lineIdx: 1,
-      nextSmokeIn: 11.0,
+      nextSmokeIn: 4.5,
       particles: [],
+      startTimer: null,
+      elapsed: 0,
     };
     this.utos = {
       active: false,
@@ -643,7 +722,7 @@ class SampayanGame {
       }
     }
 
-    // Windows on front-facing wall (y0)
+    // Windows on front-facing wall (y1) facing the player/camera
     if (options.numWindows) {
       const winCount = options.numWindows;
       const span = x1 - x0;
@@ -655,22 +734,22 @@ class SampayanGame {
           for (let z = wz - 0.45; z <= wz + 0.45; z += step) {
             const isBorder = Math.abs(a) > 0.34 || Math.abs(z - wz) > 0.40;
             if (isBorder) {
-              this.renderer.plot(wx + a, y0 - 0.02, z, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[2]);
+              this.renderer.plot(wx + a, y1 + 0.02, z, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[2]);
             } else {
               const slat = Math.floor((z + 10) * 5.2) % 2;
-              this.renderer.plot(wx + a, y0 - 0.02, z, this.renderer.rampOf(this.JALOUSIE)[slat ? 3 : 2]);
+              this.renderer.plot(wx + a, y1 + 0.02, z, this.renderer.rampOf(this.JALOUSIE)[slat ? 3 : 2]);
               // Vertical security grille bars
               if (Math.abs(a % 0.16) < 0.025) {
-                this.renderer.plot(wx + a, y0 - 0.05, z, this.renderer.rampOf(this.GRILLE)[1]);
+                this.renderer.plot(wx + a, y1 + 0.05, z, this.renderer.rampOf(this.GRILLE)[1]);
               }
             }
           }
         }
-        // Medya Agua (small wooden/yero awning above window)
+        // Medya Agua (small wooden/yero awning above window extending toward camera)
         for (let a = -0.48; a <= 0.48; a += step) {
           for (let dy = 0; dy <= 0.32; dy += step) {
             const az = wz + 0.52 - dy * 0.32;
-            this.renderer.plot(wx + a, y0 - dy, az, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[3]);
+            this.renderer.plot(wx + a, y1 + dy, az, this.renderer.rampOf(this.NEIGHBOR_WOOD_DARK)[3]);
           }
         }
       }
@@ -844,12 +923,14 @@ class SampayanGame {
     // 1. House 1: Right-Center, Bangketa Red Yero Gable Roof (Aling Marites)
     this.buildHouseBody(1.0, 6.8, -9.8, -13.2, -4.5, -0.80, this.NEIGHBOR_WALL_CREAM, 21, {
       numWindows: 2,
+      zRidge: 0.10,
     });
     this.buildCorrugatedGableRoof(1.0, 6.8, -9.8, -13.2, -0.80, 0.10, this.NEIGHBOR_ROOF_RED, 22, true);
 
     // 2. House 2: Left-Center, Barangay Green Yero Gable Roof (Mang Cardo)
     this.buildHouseBody(-7.5, -1.2, -10.0, -13.4, -4.5, -0.85, this.NEIGHBOR_WALL_MINT, 31, {
       numWindows: 2,
+      zRidge: 0.05,
     });
     this.buildCorrugatedGableRoof(-7.5, -1.2, -10.0, -13.4, -0.85, 0.05, this.NEIGHBOR_ROOF_GREEN, 32, true);
 
@@ -933,7 +1014,7 @@ class SampayanGame {
     }
 
     // 2. Stairwell Landing with Corrugated Galvanized Iron (Yero) Shed Roof
-    this.renderer.box(-12.2, -6.7, 0, -8.4, -3.2, 3.5, this.PLASTER, 5);
+    this.renderer.box(-12.2, -6.7, 0, -8.4, -3.2, 3.28, this.PLASTER, 5);
     for (let a = -10.9; a <= -9.7; a += step) {
       for (let z = 0; z <= 2.5; z += step) {
         const isFrame = Math.abs(a + 10.3) > 0.54 || z > 2.44;
@@ -1310,26 +1391,81 @@ class SampayanGame {
     const gusty = 1 + this.stormLevel() * 0.9 + this.gustGlow * 1.2;
     const amp = item.state === 'loose' ? 0.55 : flying || item.state === 'held' ? 0.4 : 0.12 * gusty;
     const speed = item.state === 'loose' ? 9 : 3 + this.stormLevel() * 2;
-    const cr = Math.cos(item.rot), sr = Math.sin(item.rot), step = 0.055;
+    const cr = Math.cos(item.rot), sr = Math.sin(item.rot), step = 0.050;
     const dryness = Math.floor(item.wet * 1.8);
     const trailX = item.state === 'held' ? this.renderer.clamp(item.vx * 0.05, -0.7, 0.7) : 0;
     const W = this.renderer.width, H = this.renderer.height;
+    const isSheet = item.kind === 'bimpo' || item.kind === 'floral_blanket';
 
     for (let u = -item.w / 2; u <= item.w / 2; u += step) {
       for (let v = 0; v <= item.h; v += step) {
         if (!this.inside(item, u, v)) continue;
         const wave = u * 3.2 + t * speed + item.phase + v * 1.2, s = Math.sin(wave), c = Math.cos(wave);
         let px, py, pz;
+        let normalX = 0, normalY = 1.0, depth3D = 0, creaseShadow = 0;
+
+        if (!isSheet && !flat) {
+          // 3D Geometric Volume & Curvature for pants and garments
+          if (item.kind === 'maong' || item.kind === 'short_pambahay') {
+            const isShorts = item.kind === 'short_pambahay';
+            const crotchV = isShorts ? item.h * 0.40 : item.h * 0.34;
+            if (v > crotchV) {
+              // Below crotch: Two rounded tubular pant legs
+              const legCenter = u < 0 ? -item.w * 0.25 : item.w * 0.25;
+              const legRadius = item.w * 0.21;
+              const relU = this.renderer.clamp((u - legCenter) / legRadius, -1, 1);
+              normalX = relU;
+              normalY = Math.sqrt(Math.max(0, 1 - normalX * normalX));
+              depth3D = normalY * (isShorts ? 0.10 : 0.13);
+              if (Math.abs(u) < 0.09) creaseShadow = -1;
+            } else {
+              // Waistband / hip cylinder
+              const waistRelU = this.renderer.clamp(u / (item.w * 0.46), -1, 1);
+              normalX = waistRelU;
+              normalY = Math.sqrt(Math.max(0, 1 - normalX * normalX));
+              depth3D = normalY * 0.12;
+            }
+          } else {
+            // Shirts, Uniforms, Daster, Jerseys, Sandos: Rounded torso cylinder & fabric folds
+            const torsoRelU = this.renderer.clamp(u / (item.w * 0.45), -1, 1);
+            normalX = torsoRelU;
+            normalY = Math.sqrt(Math.max(0, 1 - normalX * normalX));
+            depth3D = normalY * 0.10;
+
+            if (item.kind === 'school_uniform' && v >= item.h * 0.44) {
+              const pleat = Math.sin(u * 28);
+              depth3D += pleat * 0.025;
+              normalX += pleat * 0.35;
+            } else if (item.kind === 'daster') {
+              const fold = Math.sin(u * 14 + v * 3.5);
+              depth3D += fold * 0.03;
+              normalX += fold * 0.35;
+            }
+          }
+        }
+
         if (flat) {
-          px = item.x + u; py = item.y + v - item.h / 2; pz = 0.05 + (s + 1) * 0.03;
+          px = item.x + u;
+          py = item.y + v - item.h / 2;
+          pz = 0.05 + (s + 1) * 0.03;
         } else {
           const reach = pinned ? v / item.h + 0.12 : 1;
           px = item.x + u * cr - v * sr - trailX * v;
-          py = item.y + s * amp * reach;
+          py = item.y + s * amp * reach + depth3D;
           pz = item.z - v * cr - u * sr;
           if (pz < 0.05) pz = 0.05;
         }
-        const level = this.renderer.clamp(3 + Math.round(c * 1.1) - dryness, 0, 4);
+
+        // Shading: 3D normal lighting combined with wind fluttering wave
+        let level;
+        if (!isSheet && !flat) {
+          const diffuse = -0.55 * normalX + 0.65 * normalY;
+          const shade3D = Math.round(diffuse * 1.6 + creaseShadow);
+          level = this.renderer.clamp(3 + Math.round(c * 0.6) + shade3D - dryness, 0, 4);
+        } else {
+          level = this.renderer.clamp(3 + Math.round(c * 1.1) - dryness, 0, 4);
+        }
+
         const p = this.renderer.project(px, py, pz), ix = p.sx | 0, iy = p.sy | 0;
         if (ix < 0 || iy < 0 || ix >= W || iy >= H) continue;
         const i = iy * W + ix;
@@ -1367,10 +1503,17 @@ class SampayanGame {
     }
 
     if (!flat) {
-      const samples = item.kind === 'bimpo' ? 1 : (item.kind === 'floral_blanket' ? 4 : 3);
+      const samples = item.kind === 'bimpo' ? 1 : (item.kind === 'floral_blanket' ? 3 : 2);
       for (let k = 0; k < samples; k++) {
-        const a = samples === 1 ? 0 : (k / (samples - 1) - 0.5) * item.w * 0.75;
-        this.renderer.castShadow(item.x + a, item.y, Math.max(0.05, item.z - item.h / 2), Math.max(0.22, item.h * 0.34), 1, 0.4);
+        const a = samples === 1 ? 0 : (k / (samples - 1) - 0.5) * item.w * 0.70;
+        const shadowR = Math.max(0.09, Math.min(0.18, item.w / (samples * 1.8)));
+        this.renderer.castShadow(
+          item.x + a, item.y,
+          Math.max(0.05, item.z - item.h / 2),
+          shadowR,
+          1,
+          0.82
+        );
       }
     }
   }
@@ -1393,7 +1536,7 @@ class SampayanGame {
     }
     for (let a = 0; a < 6.283; a += 0.08) {
       for (let q = 0; q < r * 0.88; q += step) {
-        this.renderer.plot(this.BASKET.x + Math.cos(a) * q, this.BASKET.y + Math.sin(a) * q, h - 0.04, this.renderer.rampOf(this.BATYA)[1]);
+        this.renderer.plot(this.BASKET.x + Math.cos(a) * q, this.BASKET.y + Math.sin(a) * q, 0.04, this.renderer.rampOf(this.BATYA)[1]);
       }
     }
   }
@@ -1405,20 +1548,57 @@ class SampayanGame {
   drawPile() {
     const bankedCurrent = this.items.filter(i => i.state === 'basket');
     const allBanked = (this.cumBankedItems || []).concat(bankedCurrent);
+    if (!allBanked || allBanked.length === 0) return;
     const s = this.basketBounce > 0 ? Math.sin(this.basketBounce * Math.PI) : 0;
-    const radScale = 1 + s * 0.22;
-    const hScale = 1 - s * 0.28;
+    const radScale = 1 + s * 0.20;
+    const hScale = 1 - s * 0.25;
 
     allBanked.forEach((item, k) => {
-      const a = this.renderer.hash(k, 51) * 6.28, d = this.renderer.hash(k, 52) * this.BASKET.r * 0.55 * radScale;
-      this.renderer.sphere(
-        this.BASKET.x + Math.cos(a) * d,
-        this.BASKET.y + Math.sin(a) * d,
-        (this.BASKET.h + Math.min(1.1, k * 0.06) + this.renderer.hash(k, 53) * 0.2) * hScale,
-        (item.kind === 'bimpo' ? 0.22 : item.kind === 'floral_blanket' ? 0.46 : 0.36) * radScale,
-        item.color,
-        'solid'
-      );
+      const ang = this.renderer.hash(k, 51) * 6.28;
+      // Spread across basin interior
+      const d = (0.06 + this.renderer.hash(k, 52) * (this.BASKET.r * 0.52)) * radScale;
+      const bx = this.BASKET.x + Math.cos(ang) * d;
+      const by = this.BASKET.y + Math.sin(ang) * d;
+
+      // Rest inside tub starting below the rim lip (h = 1.0), accumulating naturally as items increase
+      const cz = Math.max(0.42, (0.58 + Math.min(0.48, k * 0.045) + (this.renderer.hash(k, 53) - 0.5) * 0.06) * hScale);
+      const rad = (item.kind === 'bimpo' ? 0.22 : item.kind === 'floral_blanket' ? 0.36 : 0.30) * radScale;
+
+      // 3D Draped folded fabric bundle with orientation angle
+      const foldAng = this.renderer.hash(k, 54) * Math.PI;
+      const ox = Math.cos(foldAng) * rad * 0.55;
+      const oy = Math.sin(foldAng) * rad * 0.55;
+
+      const baseColor = item.color || [180, 180, 190];
+      const accentColor = item.accent || (item.kind === 'maong' ? [215, 145, 45] : baseColor);
+
+      // Main fabric bundle rolls
+      this.renderer.sphere(bx - ox, by - oy, cz, rad * 0.82, baseColor, 'rough');
+      this.renderer.sphere(bx + ox, by + oy, cz, rad * 0.82, baseColor, 'rough');
+
+      // Recognizable accent fold / stitching / drape details
+      if (item.kind === 'floral_blanket') {
+        // Red / pink floral bouquet accent on the folded blanket
+        this.renderer.sphere(bx, by, cz + rad * 0.32, rad * 0.52, [230, 60, 85], 'solid');
+        this.renderer.sphere(bx + 0.06, by - 0.04, cz + rad * 0.36, rad * 0.26, [248, 215, 45], 'solid');
+      } else if (item.kind === 'maong') {
+        // Denim fold with gold seam
+        this.renderer.sphere(bx, by, cz + rad * 0.28, rad * 0.38, [215, 145, 45], 'solid');
+      } else if (item.kind === 'school_uniform') {
+        // Crisp white polo blouse fold with dark pleated skirt accent
+        this.renderer.sphere(bx, by, cz + rad * 0.30, rad * 0.44, [246, 246, 250], 'solid');
+        this.renderer.sphere(bx + ox * 0.5, by + oy * 0.5, cz + rad * 0.22, rad * 0.40, accentColor, 'rough');
+      } else if (item.kind === 'daster') {
+        // Floral house dress with bright accent dot
+        this.renderer.sphere(bx, by, cz + rad * 0.30, rad * 0.44, accentColor, 'solid');
+        this.renderer.sphere(bx - ox * 0.3, by + oy * 0.3, cz + rad * 0.32, rad * 0.24, [255, 235, 100], 'solid');
+      } else if (item.kind === 'bimpo') {
+        // Red-and-white striped towel fold
+        this.renderer.sphere(bx, by, cz + rad * 0.30, rad * 0.40, [215, 32, 42], 'solid');
+      } else {
+        // Accent collar / hem fold for sando, jersey, and shorts
+        this.renderer.sphere(bx, by, cz + rad * 0.32, rad * 0.42, accentColor, 'solid');
+      }
     });
   }
 
@@ -1578,30 +1758,24 @@ class SampayanGame {
     this.bolt = null;
     this.boltIn = roundNum === 3 ? 7 : (roundNum === 2 ? 14 : 22);
 
-    // Reset hazards for new round
-    this.cat = {
-      active: false,
-      state: 'inactive',
-      x: -11,
-      y: 5.8,
-      z: 0.6,
-      vx: 0,
-      vy: 0,
-      targetItem: null,
-      targetLine: 1,
-      cooldown: 5.0 + Math.random() * 3,
-      timer: 0,
-      animTime: 0,
-      facing: 1,
-      napTimer: 0,
-    };
+    // Reset hazards for new round with escalating pressure
+    this.stunTimer = 0;
+    this.flyingSlipper = null;
+    this.initCats(roundNum);
+    const smokeCooldown = roundNum === 3 ? (2.2 + Math.random() * 1.0) : (roundNum === 2 ? (3.0 + Math.random() * 1.2) : (4.0 + Math.random() * 1.5));
     this.smokeEvent = {
       active: false,
+      warning: false,
+      warningTimer: 0,
+      warningDuration: 2.4,
       timer: 0,
-      duration: 8.5,
+      duration: 12.0,
+      speed: 2.4,
       lineIdx: 1,
-      nextSmokeIn: 10.0 + Math.random() * 4,
+      nextSmokeIn: smokeCooldown,
       particles: [],
+      startTimer: null,
+      elapsed: 0,
     };
     this.utos = {
       active: false,
@@ -1632,6 +1806,8 @@ class SampayanGame {
     this.tsinelasMeter = 0;
     this.tsinelasRage = false;
     this.tsinelasShake = 0;
+    this.stunTimer = 0;
+    this.flyingSlipper = null;
     this.auto = false;
     this.pointer = null;
     this.pointerDownPos = null;
@@ -1738,6 +1914,41 @@ class SampayanGame {
 
   bank(item = this.held) {
     if (!item) return;
+
+    // Chubby Siopao (or any cat) loafing/clawing at the tub blocks the basket!
+    const blockingCat = this.cats ? this.cats.find(c => c.active && c.state === 'tip_basket') : null;
+    if (blockingCat) {
+      if (this.held === item) {
+        this.held = null;
+        this.auto = false;
+      }
+      item.state = 'falling';
+      item.soiled = 'paw';
+      item.catSpilled = true;
+      item.x = this.BASKET.x;
+      item.y = this.BASKET.y;
+      item.z = this.BASKET.h + 0.6;
+      item.vx = (Math.random() - 0.5) * 4.0;
+      item.vy = 2.2;
+      item.vz = 2.8;
+      item.rot += (Math.random() - 0.5) * 1.0;
+      item.pinsRemaining = 0;
+      this.audio.playSfx('catHiss');
+      this.basketBounce = 0.5;
+      const bp = this.renderer.project(this.BASKET.x, this.BASKET.y, this.BASKET.h + 0.6);
+      const isSiopao = blockingCat.type === 'siopao';
+      this.addFloater(
+        this.currentLang === 'tl' ? (isSiopao ? 'HARANG NI SIOPAO!' : 'HARANG NG PUSA!') : (isSiopao ? 'BLOCKED BY SIOPAO!' : 'BLOCKED BY CAT!'),
+        bp.sx, bp.sy - 15, '#ef4444', 7
+      );
+      this.setNanaySpeech(
+        isSiopao ? "Hinarangan ni Siopao ang batya! Itaboy mo muna!" : "Hinarangan ng pusa ang batya! Itaboy mo muna!",
+        isSiopao ? "Siopao is loafing on the tub! Shoo him away first!" : "The cat is blocking the tub! Shoo it away first!",
+        2.5, 'urgent'
+      );
+      return;
+    }
+
     if (this.held === item) {
       this.held = null;
       this.auto = false;
@@ -2210,7 +2421,7 @@ class SampayanGame {
           this.cumTotal += this.items.length;
           this.cumBanked = (this.cumBanked || 0) + banked.length;
           this.cumBankedItems = (this.cumBankedItems || []).concat(
-            banked.map(i => ({ kind: i.kind, color: i.color }))
+            banked.map(i => ({ kind: i.kind, color: i.color, accent: i.accent }))
           );
 
           // Clear rain drops and silence stormy weather audio for triumphant victory banner
@@ -2318,28 +2529,38 @@ class SampayanGame {
           }
         }
       } else if (item.state === 'falling') {
+        item.x += (item.vx || 0) * dt;
+        item.y += (item.vy || 0) * dt;
+        item.vx = (item.vx || 0) * (1 - dt * 0.5);
+        item.vy = (item.vy || 0) * (1 - dt * 0.5);
         item.vz -= 14 * dt;
         item.z += item.vz * dt;
         item.rot *= 0.9;
         if (item.z < 0.6) {
           item.state = 'ground';
+          item.z = 0.6;
           item.wasBlown = false;
           item.rot = 0;
           item.vz = 0;
-          this.adjustTsinelasMeter(+5);
-          // Live Nanay reaction to dropped clothing
-          if (!this.nanaySpeech || this.nanaySpeech.timer < 0.5) {
-            const dropQuotesTl = [
-              "Hala, ba't mo binagsak sa semento?! Kakalaba ko lang niyan!",
-              "Wag sa lapag! Pag 'yan namantsahan, ikaw magkukuskos niyan!",
-            ];
-            const dropQuotesEn = [
-              "Why'd you drop it on the cement?! I just washed that!",
-              "Not on the floor! If that stains, you're hand-scrubbing it!",
-            ];
-            const dIdx = Math.floor(Math.random() * dropQuotesTl.length);
-            this.setNanaySpeech(dropQuotesTl[dIdx], dropQuotesEn[dIdx], 2.2, 'scold');
+          item.vx = 0;
+          item.vy = 0;
+          if (!item.catSpilled) {
+            this.adjustTsinelasMeter(+5);
+            // Live Nanay reaction to dropped clothing
+            if (!this.nanaySpeech || this.nanaySpeech.timer < 0.5) {
+              const dropQuotesTl = [
+                "Hala, ba't mo binagsak sa semento?! Kakalaba ko lang niyan!",
+                "Wag sa lapag! Pag 'yan namantsahan, ikaw magkukuskos niyan!",
+              ];
+              const dropQuotesEn = [
+                "Why'd you drop it on the cement?! I just washed that!",
+                "Not on the floor! If that stains, you're hand-scrubbing it!",
+              ];
+              const dIdx = Math.floor(Math.random() * dropQuotesTl.length);
+              this.setNanaySpeech(dropQuotesTl[dIdx], dropQuotesEn[dIdx], 2.2, 'scold');
+            }
           }
+          item.catSpilled = false;
         }
       } else if (item.state === 'tossed') {
         item.x += item.vx * dt;
@@ -2450,15 +2671,19 @@ class SampayanGame {
       if (this.tsinelasShake > 0) {
         this.tsinelasShake = Math.max(0, this.tsinelasShake - dt * 2.5);
       }
+      if (this.stunTimer > 0) {
+        this.stunTimer = Math.max(0, this.stunTimer - dt);
+      }
       this.updateCat(dt);
       this.updateSmoke(dt);
       this.updateUtos(dt);
+      this.updateFlyingSlipper(dt);
     }
 
     this.updateRain(dt, rain);
   }
 
-  /* ---------- Rooftop Chaos Hazard Logic (Munin, Smoke, Utos, Tsinelas) ---------- */
+  /* ---------- Rooftop Chaos Hazard Logic (Cats, Slipper, Smoke, Utos) ---------- */
   adjustTsinelasMeter(amount) {
     this.tsinelasMeter = Math.max(0, Math.min(100, (this.tsinelasMeter || 0) + amount));
     if (amount > 0) {
@@ -2476,6 +2701,7 @@ class SampayanGame {
           this.currentLang === 'tl' ? 'HUMANDA SA TSINELAS! 🩴' : 'SLIPPER INCOMING! 🩴',
           this.renderer.width / 2, 60, '#ce1126', 8
         );
+        this.launchFlyingSlipper();
       }
     }
     if (this.onTsinelasChange) {
@@ -2483,36 +2709,252 @@ class SampayanGame {
     }
   }
 
-  updateCat(dt) {
-    if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
-    const cat = this.cat;
+  launchFlyingSlipper() {
+    if (this.flyingSlipper && this.flyingSlipper.active) return;
+    let targetX = 0;
+    let targetY = 1.0;
+    if (this.held) {
+      targetX = this.held.x;
+      targetY = this.held.y;
+    } else if (this.pointer) {
+      const pw = this.pointerWorld();
+      targetX = Math.max(-8, Math.min(8, pw.x));
+      targetY = Math.max(-2, Math.min(5, pw.y));
+    }
+    const fromLeft = targetX > 0;
+    const startX = fromLeft ? -13.5 : 13.5;
+    const startY = -4.5;
+    const startZ = 7.5;
+    const targetZ = 0.45;
+    const flightDuration = 0.75;
+    this.flyingSlipper = {
+      active: true,
+      startX, startY, startZ,
+      x: startX, y: startY, z: startZ,
+      tx: targetX, ty: targetY, tz: targetZ,
+      vx: (targetX - startX) / flightDuration,
+      vy: (targetY - startY) / flightDuration,
+      vz: (targetZ - startZ) / flightDuration + 0.5 * 18.0 * flightDuration,
+      gravity: 18.0,
+      rot: 0,
+      spin: (fromLeft ? 1 : -1) * 22.0,
+      time: 0,
+      duration: flightDuration,
+      hasHit: false,
+    };
+    this.audio.playSfx('toss');
+  }
+
+  updateFlyingSlipper(dt) {
+    if (!this.flyingSlipper || !this.flyingSlipper.active) return;
+    const s = this.flyingSlipper;
+    s.time += dt;
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    s.z += s.vz * dt;
+    s.vz -= s.gravity * dt;
+    s.rot += s.spin * dt;
+
+    // Check collision with cats in flight path!
+    const activeCats = this.cats && this.cats.length > 0 ? this.cats : (this.cat ? [this.cat] : []);
+    for (const cat of activeCats) {
+      if (cat.active && cat.state !== 'flee') {
+        const catDist = Math.hypot(cat.x - s.x, cat.y - s.y);
+        if (catDist < 2.4 && Math.abs(cat.z - s.z) < 2.5) {
+          cat.state = 'flee';
+          cat.facing = cat.x >= s.x ? 1 : -1;
+          cat.vx = cat.facing * 9.0;
+          cat.z = 0;
+          this.audio.playSfx('catHiss');
+          const cp = this.renderer.project(cat.x, cat.y, cat.z);
+          this.addFloater(this.currentLang === 'tl' ? 'SAPUL ANG PUSA!' : 'CAT SMACKED!', cp.sx, cp.sy - 15, '#ffd700', 7);
+          this.setNanaySpeech(
+            "Pati ang pusa nadamay sa tsinelas!",
+            "Even the cat got struck by the slipper!",
+            2.4, 'cheer'
+          );
+        }
+      }
+    }
+
+    // Impact ground or target!
+    if (s.time >= s.duration || s.z <= s.tz) {
+      s.active = false;
+      s.hasHit = true;
+      this.screenShake = 0.55;
+      this.audio.playSfx('tsinelas');
+
+      // Slap away any cats caught in impact shockwave
+      for (const cat of activeCats) {
+        if (cat.active && cat.state !== 'flee') {
+          const impactDist = Math.hypot(cat.x - s.tx, cat.y - s.ty);
+          if (impactDist < 2.6) {
+            cat.state = 'flee';
+            cat.facing = cat.x >= s.tx ? 1 : -1;
+            cat.vx = cat.facing * 9.0;
+            this.audio.playSfx('catHiss');
+            const cp = this.renderer.project(cat.x, cat.y, cat.z);
+            this.addFloater(this.currentLang === 'tl' ? 'SAPUL ANG PUSA!' : 'CAT SMACKED!', cp.sx, cp.sy - 15, '#ffd700', 7);
+          }
+        }
+      }
+
+      const ip = this.renderer.project(s.tx, s.ty, s.tz);
+      this.addFloater(this.currentLang === 'tl' ? 'PLOK!' : 'THWACK!', ip.sx, ip.sy - 10, '#ce1126', 8);
+
+      // Check collision with player carry action / pointer:
+      const pw = this.pointer ? this.pointerWorld() : null;
+      const pointerDist = pw ? Math.hypot(pw.x - s.tx, pw.y - s.ty) : 999;
+      const heldDist = this.held ? Math.hypot(this.held.x - s.tx, this.held.y - s.ty) : 999;
+      const isPlayerHit = heldDist < 4.0 || pointerDist < 4.0;
+
+      if (isPlayerHit) {
+        if (this.held) {
+          const dropped = this.held;
+          this.held = null;
+          this.auto = false;
+          dropped.state = 'falling';
+          dropped.catSpilled = true;
+          dropped.vx = (Math.random() - 0.5) * 5.0;
+          dropped.vy = 2.2;
+          dropped.vz = 2.6;
+          dropped.rot += (Math.random() - 0.5) * 1.5;
+
+          if (this.heldItems && this.heldItems.length > 0) {
+            this.heldItems.forEach(it => {
+              it.state = 'falling';
+              it.catSpilled = true;
+              it.vx = (Math.random() - 0.5) * 5.0;
+              it.vy = 2.2;
+              it.vz = 2.6;
+            });
+            this.heldItems = [];
+          }
+
+          this.addFloater(
+            this.currentLang === 'tl' ? 'ARAY KO! NABITAWAN! 🩴' : 'OUCH! DROPPED LAUNDRY! 🩴',
+            ip.sx, ip.sy - 22, '#ef4444', 8
+          );
+        } else {
+          this.addFloater(
+            this.currentLang === 'tl' ? 'ARAY KO! TAMA SA KAMAY! 🩴' : 'OUCH! HIT MY HAND! 🩴',
+            ip.sx, ip.sy - 22, '#ef4444', 8
+          );
+        }
+
+        this.stunTimer = 1.0;
+        this.setNanaySpeech(
+          "Sabi ko sayo bilisan mo eh! Ayan ang napala mo!",
+          "I told you to hurry! That's what you get!",
+          2.8, 'scold'
+        );
+      }
+
+      // After throwing her slipper, Nanay's rage drops partially
+      this.tsinelasMeter = 45;
+      this.tsinelasRage = false;
+      if (this.onTsinelasChange) {
+        this.onTsinelasChange(this.tsinelasMeter, this.tsinelasRage);
+      }
+    }
+  }
+
+  updateSingleCat(cat, dt) {
     cat.animTime += dt;
+    if (cat.animShake > 0) {
+      cat.animShake = Math.max(0, cat.animShake - dt * 3.5);
+    }
 
     if (cat.state === 'inactive') {
       cat.cooldown -= dt;
       if (cat.cooldown <= 0) {
         cat.active = true;
+        cat.hitsRemaining = cat.maxHp;
         const fromLeft = Math.random() < 0.5;
         cat.x = fromLeft ? -10.5 : 10.5;
         cat.y = 5.8;
-        cat.z = 0.6;
+        cat.z = 0;
         cat.facing = fromLeft ? 1 : -1;
         cat.state = 'parapet_walk';
-        cat.timer = 5.0 + Math.random() * 4.0;
+        cat.timer = 4.0 + Math.random() * 3.0;
         this.audio.playSfx('meow');
+        if (cat.type === 'siopao') {
+          this.setNanaySpeech(
+            "Aba, andiyan na naman si Siopao! Ingatan ang batya!",
+            "Siopao is back! Watch the laundry tub!",
+            2.5, 'urgent'
+          );
+        } else if (cat.type === 'kitkit') {
+          this.setNanaySpeech(
+            "Hala, si Kitkit! Ang bilis tumakbo sa sampayan!",
+            "Look out, Kitkit! Zipping across the clothesline!",
+            2.5, 'urgent'
+          );
+        }
       }
       return;
     }
 
     if (cat.state === 'parapet_walk') {
-      cat.x += cat.facing * 1.8 * dt;
+      cat.x += cat.facing * cat.speed * dt;
       cat.timer -= dt;
 
-      // Detect fallen unsoiled clothes on ground
+      // Kitkit signature behavior: Speedy kitten zips under clotheslines swiping at garments!
+      if (cat.type === 'kitkit') {
+        const lineClothes = this.items.filter(i => i.state === 'line');
+        if (lineClothes.length > 0 && Math.random() < 0.75) {
+          const linesWithClothes = [...new Set(lineClothes.map(i => {
+            let bestLine = 0;
+            let bestDist = 999;
+            this.LINE_YS.forEach((ly, lIdx) => {
+              const d = Math.abs(i.y - ly);
+              if (d < bestDist) { bestDist = d; bestLine = lIdx; }
+            });
+            return bestLine;
+          }))];
+          cat.targetLine = linesWithClothes[Math.floor(Math.random() * linesWithClothes.length)];
+          cat.state = 'zip_line';
+          cat.y = this.LINE_YS[cat.targetLine];
+          cat.z = 0;
+          cat.facing = cat.x <= 0 ? 1 : -1;
+          cat.timer = 5.0;
+          this.audio.playSfx('meow');
+          this.setNanaySpeech(
+            "Hala si Kitkit! Tatakbo sa ilalim ng sampayan!",
+            "Look out, Kitkit! Zipping under the clotheslines!",
+            2.4, 'urgent'
+          );
+          return;
+        }
+      }
+
+      // Detect unsoiled fallen clothes on ground
       const groundItem = this.items.find(i => i.state === 'ground' && !i.soiled);
-      if (groundItem) {
+      // Detect clean banked clothes in the tub
+      const bankedItems = this.items.filter(i => i.state === 'basket');
+
+      // Decide target
+      if (groundItem && bankedItems.length > 0) {
+        if (Math.random() < 0.5) {
+          cat.targetItem = groundItem;
+          cat.targetType = 'ground';
+          cat.state = 'stalk';
+          cat.timer = 8.0;
+        } else {
+          cat.targetItem = null;
+          cat.targetType = 'basket';
+          cat.state = 'stalk_basket';
+          cat.timer = 8.0;
+        }
+      } else if (groundItem) {
         cat.targetItem = groundItem;
+        cat.targetType = 'ground';
         cat.state = 'stalk';
+        cat.timer = 8.0;
+      } else if (bankedItems.length > 0) {
+        cat.targetItem = null;
+        cat.targetType = 'basket';
+        cat.state = 'stalk_basket';
         cat.timer = 8.0;
       } else if (cat.timer <= 0) {
         if (Math.random() < 0.5) {
@@ -2523,6 +2965,57 @@ class SampayanGame {
         } else {
           cat.state = 'flee';
           cat.facing = cat.x > 0 ? 1 : -1;
+        }
+      }
+    } else if (cat.state === 'zip_line') {
+      cat.y = this.LINE_YS[cat.targetLine || 1];
+      cat.z = 0;
+      cat.x += cat.facing * (cat.speed * 1.35) * dt;
+      cat.timer -= dt;
+
+      // Check garments hanging on this line within swat range
+      const hangingOnLine = this.items.filter(i => i.state === 'line' && Math.abs(i.y - cat.y) < 0.6);
+      for (const item of hangingOnLine) {
+        if (Math.abs(item.x - cat.x) < 1.1 && !item.kitkitSwiped) {
+          item.kitkitSwiped = true;
+          this.audio.playSfx('catHiss');
+          if (item.pinsRemaining > 1) {
+            item.pinsRemaining--;
+            item.rot += (Math.random() - 0.5) * 0.35;
+            const p = this.renderer.project(item.x, item.y, item.z);
+            this.addFloater(this.currentLang === 'tl' ? 'KALMOT!' : 'SWIPED!', p.sx, p.sy - 12, '#f59e0b', 6);
+          } else {
+            item.pinsRemaining = 0;
+            item.state = 'falling';
+            item.soiled = 'paw';
+            item.catSpilled = true;
+            item.vx = cat.facing * 2.2;
+            item.vy = (Math.random() - 0.5) * 1.5;
+            item.vz = 2.4;
+            item.rot += (Math.random() - 0.5) * 0.8;
+            this.adjustTsinelasMeter(+10);
+            const p = this.renderer.project(item.x, item.y, item.z);
+            this.addFloater(this.currentLang === 'tl' ? 'NAKALMOT!' : 'SWIPED DOWN!', p.sx, p.sy - 15, '#ce1126', 7);
+            this.setNanaySpeech(
+              "Kitkit! Huwag mong kalmutin ang sinampay!",
+              "Kitkit! Stop clawing at the hanging laundry!",
+              2.4, 'scold'
+            );
+          }
+        }
+      }
+
+      if (Math.abs(cat.x) > 11.5 || cat.timer <= 0) {
+        this.items.forEach(i => { delete i.kitkitSwiped; });
+        const banked = this.items.filter(i => i.state === 'basket');
+        if (banked.length > 0 && Math.random() < 0.65) {
+          cat.state = 'stalk_basket';
+          cat.timer = 8.0;
+        } else {
+          cat.y = 5.8;
+          cat.state = 'parapet_walk';
+          cat.timer = 4.0;
+          cat.facing = cat.x > 0 ? -1 : 1;
         }
       }
     } else if (cat.state === 'stalk') {
@@ -2538,14 +3031,14 @@ class SampayanGame {
       cat.facing = dx >= 0 ? 1 : -1;
 
       if (dist > 0.7) {
-        cat.x += (dx / dist) * 2.2 * dt;
-        cat.y += (dy / dist) * 2.2 * dt;
+        cat.x += (dx / dist) * (cat.speed * 1.1) * dt;
+        cat.y += (dy / dist) * (cat.speed * 1.1) * dt;
       } else {
         cat.state = 'knead_nap';
         cat.napTimer = 1.8;
         this.setNanaySpeech(
-          "Hala, si Munin! Lalapitan ang sinampay sa lapag!",
-          "Look out, Munin! He's heading for the fallen laundry!",
+          `Hala, si ${cat.name}! Lalapitan ang sinampay sa lapag!`,
+          `Look out, ${cat.name}! Heading for the fallen laundry!`,
           2.4, 'urgent'
         );
       }
@@ -2562,13 +3055,85 @@ class SampayanGame {
         this.adjustTsinelasMeter(+15);
         this.score = Math.max(0, Math.round((this.score - 5) * 10) / 10);
         this.onScoreChange(this.score);
-        const p = this.renderer.project(cat.targetItem.x, cat.targetItem.y, 0.6);
+        const p = this.renderer.project(cat.targetItem.x, cat.targetItem.y, 0.05);
         this.addFloater(this.currentLang === 'tl' ? 'MADUMI! -5' : 'SOILED! -5', p.sx, p.sy - 10, '#ce1126', 6);
         this.setNanaySpeech(
-          "Jusko! Tinapakan ng pusa ang puti! Munin, tsupe!",
-          "Good grief! The cat stepped on the laundry! Shoo, Munin!",
+          `Jusko! Tinapakan ni ${cat.name} ang puti! Munin, tsupe!`,
+          `Good grief! ${cat.name} stepped on the laundry! Shoo!`,
           2.6, 'scold'
         );
+        cat.state = 'flee';
+        cat.facing = cat.x > 0 ? 1 : -1;
+      }
+    } else if (cat.state === 'stalk_basket') {
+      const banked = this.items.filter(i => i.state === 'basket');
+      if (banked.length === 0) {
+        cat.state = 'parapet_walk';
+        cat.timer = 3.0;
+        return;
+      }
+      const dx = this.BASKET.x - cat.x;
+      const dy = this.BASKET.y - cat.y;
+      const dist = Math.hypot(dx, dy);
+      cat.facing = dx >= 0 ? 1 : -1;
+
+      if (dist > 0.8) {
+        cat.x += (dx / dist) * (cat.speed * 1.15) * dt;
+        cat.y += (dy / dist) * (cat.speed * 1.15) * dt;
+      } else {
+        cat.state = 'tip_basket';
+        cat.tipTimer = cat.tipDelay || 2.0;
+        this.audio.playSfx('meow');
+        this.setNanaySpeech(
+          `Hala! Si ${cat.name} aabutin ang mga damit sa batya! Itaboy mo!`,
+          `Look out! ${cat.name} is clawing into the laundry tub! Shoo it away!`,
+          2.6, 'urgent'
+        );
+        const bp = this.renderer.project(this.BASKET.x, this.BASKET.y, this.BASKET.h + 0.8);
+        this.addFloater(this.currentLang === 'tl' ? 'ITUMBA ANG BATYA?!' : 'CLAWING TUB?!', bp.sx, bp.sy - 12, '#ef4444', 8);
+      }
+    } else if (cat.state === 'tip_basket') {
+      cat.tipTimer -= dt;
+      this.basketBounce = Math.max(this.basketBounce, 0.35);
+
+      if (cat.tipTimer <= 0) {
+        const banked = this.items.filter(i => i.state === 'basket');
+        if (banked.length > 0) {
+          const spillCount = Math.min(2, banked.length);
+          const spilled = banked.slice(0, spillCount);
+          spilled.forEach(item => {
+            item.state = 'falling';
+            item.soiled = 'paw';
+            item.wet = Math.max(item.wet || 0, 0.4);
+            item.x = this.BASKET.x;
+            item.y = this.BASKET.y;
+            item.z = this.BASKET.h + 0.6;
+            item.vx = (Math.random() - 0.5) * 4.0;
+            item.vy = (Math.random() - 0.5) * 3.5;
+            item.vz = 3.5;
+            item.rot = (Math.random() - 0.5) * 1.2;
+            item.pinsRemaining = 0;
+            item.catSpilled = true;
+          });
+          this.score = Math.max(0, Math.round((this.score - 10) * 10) / 10);
+          this.adjustTsinelasMeter(+20);
+          this.onScoreChange(this.score);
+          this.audio.playSfx('catHiss');
+          this.screenShake = 0.5;
+          this.basketBounce = 1.0;
+          const p = this.renderer.project(this.BASKET.x, this.BASKET.y, this.BASKET.h);
+          this.addFloater(
+            this.currentLang === 'tl' ? 'NAITUMBA ANG BATYA! -10' : 'TUB SPILLED! -10',
+            p.sx, p.sy - 15, '#ce1126', 8
+          );
+          this.setNanaySpeech(
+            "JUSKO DAY! Naitumba ng pusa ang mga damit sa batya!",
+            "GOOD GRIEF! The cat knocked over the clean laundry in the tub!",
+            3.0, 'scold'
+          );
+          const saved = this.items.filter(i => i.state === 'basket').length;
+          this.onItemCountChange(saved, this.items.length);
+        }
         cat.state = 'flee';
         cat.facing = cat.x > 0 ? 1 : -1;
       }
@@ -2577,115 +3142,226 @@ class SampayanGame {
       cat.y = lineY;
       cat.z = this.LINE_Z;
       cat.timer -= dt;
-      // Line shaking causes fluttering
       for (const item of this.items) {
         if (item.state === 'line' && Math.abs(item.y - lineY) < 0.6) {
           item.rot += (Math.random() - 0.5) * 0.16;
         }
       }
       if (cat.timer <= 0) {
-        cat.z = 0.6;
+        cat.z = 0;
         cat.y = 5.8;
         cat.state = 'parapet_walk';
         cat.timer = 4.0;
       }
     } else if (cat.state === 'flee') {
-      cat.x += cat.facing * 5.4 * dt;
+      const fleeSpeed = Math.abs(cat.vx) > 0.1 ? Math.abs(cat.vx) : 5.8;
+      cat.x += cat.facing * fleeSpeed * dt;
       if (Math.abs(cat.x) > 13.0) {
         cat.active = false;
         cat.state = 'inactive';
-        cat.cooldown = 8.0 + Math.random() * 8.0;
+        cat.vx = 0;
+        cat.cooldown = (this.round === 3 ? 3.0 : (this.round === 2 ? 4.5 : 6.0)) + Math.random() * 4.0;
       }
     }
   }
 
-  shooCat() {
-    if (!this.cat || !this.cat.active || this.cat.state === 'flee') return;
+  updateCat(dt) {
+    if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
+    const activeCats = this.cats && this.cats.length > 0 ? this.cats : (this.cat ? [this.cat] : []);
+    for (const cat of activeCats) {
+      this.updateSingleCat(cat, dt);
+    }
+  }
+
+  shooCat(targetCat) {
+    const cat = targetCat || (this.cats ? this.cats.find(c => c.active && c.state !== 'flee') : null) || this.cat;
+    if (!cat || !cat.active || cat.state === 'flee') return;
+
+    if (cat.hitsRemaining > 1) {
+      cat.hitsRemaining--;
+      cat.animShake = 0.4;
+      this.audio.playSfx('meow');
+      const catProj = this.renderer.project(cat.x, cat.y, cat.z);
+      this.addFloater(
+        this.currentLang === 'tl' ? 'MAKULIT! 1 TSUPE PA!' : 'STUBBORN! 1 HIT LEFT!',
+        catProj.sx, catProj.sy - 12, '#f59e0b', 6
+      );
+      this.setNanaySpeech(
+        "Aba'y makunat si Siopao! Tsupe sabi eh!",
+        "Siopao is stubborn! Shoo I said!",
+        2.0, 'urgent'
+      );
+      return;
+    }
+
     this.audio.playSfx('catHiss');
-    this.cat.state = 'flee';
-    this.cat.facing = this.cat.x >= 0 ? 1 : -1;
-    this.cat.z = 0.6;
+    cat.state = 'flee';
+    cat.facing = cat.x >= 0 ? 1 : -1;
+    cat.z = 0;
     this.adjustTsinelasMeter(-6);
-    const catProj = this.renderer.project(this.cat.x, this.cat.y, this.cat.z);
-    this.addFloater(this.currentLang === 'tl' ? 'TSUPE! 🐾' : 'SHOO! 🐾', catProj.sx, catProj.sy - 12, '#2ded82', 7);
-    const shooQuotesTl = [
-      'Tsupe, Munin! Huwag mong galawin ang labada!',
-      'Ayan, buti naitaboy mo ang pusang gala!',
-      'Tsupe! Dudumihan na naman ang mga damit!'
-    ];
-    const shooQuotesEn = [
-      'Shoo, Munin! Leave the laundry alone!',
-      'Nice! You chased away the stray cat!',
-      'Shoo! It would have dirtied the clean clothes!'
-    ];
+    const catProj = this.renderer.project(cat.x, cat.y, cat.z);
+    this.addFloater(this.currentLang === 'tl' ? 'TSUPE!' : 'SHOO!', catProj.sx, catProj.sy - 12, '#2ded82', 7);
+
+    let shooQuotesTl, shooQuotesEn;
+    if (cat.type === 'siopao') {
+      shooQuotesTl = [
+        'Tsupe, Siopao! Ang taba mo para maging magnanakaw!',
+        'Buti nga sa\'yo Siopao! Huwag mong uupuan ang batya!',
+      ];
+      shooQuotesEn = [
+        'Shoo, Siopao! Too chubby to be a thief!',
+        'Get out of here Siopao! Don\'t sit on the tub!',
+      ];
+    } else if (cat.type === 'kitkit') {
+      shooQuotesTl = [
+        'Tsupe, Kitkit! Ang bilis mong kuting ka!',
+        'Huli ka Kitkit! Huwag mong kalmutin ang sampay!',
+      ];
+      shooQuotesEn = [
+        'Shoo, Kitkit! You speedy kitten!',
+        'Got you Kitkit! Don\'t claw the clothesline!',
+      ];
+    } else {
+      shooQuotesTl = [
+        'Tsupe, Munin! Huwag mong galawin ang labada!',
+        'Ayan, buti naitaboy mo ang pusang gala!',
+        'Tsupe! Dudumihan na naman ang mga damit!'
+      ];
+      shooQuotesEn = [
+        'Shoo, Munin! Leave the laundry alone!',
+        'Nice! You chased away the stray cat!',
+        'Shoo! It would have dirtied the clean clothes!'
+      ];
+    }
     const sIdx = Math.floor(Math.random() * shooQuotesTl.length);
     this.setNanaySpeech(shooQuotesTl[sIdx], shooQuotesEn[sIdx], 2.2, 'cheer');
+  }
+
+  pickSmokeLine() {
+    // Only target ONE lane of shirts at a time
+    // Prioritize lines that currently have hanging clothes (specifically unsoiled white/vulnerable clothes)
+    const linesWithClothes = [0, 1, 2].filter(lineIdx =>
+      this.items.some(i => i.state === 'line' && Math.abs(i.y - this.LINE_YS[lineIdx]) < 0.6)
+    );
+    const linesWithUnsoiledWhite = linesWithClothes.filter(lineIdx =>
+      this.items.some(i => i.state === 'line' && Math.abs(i.y - this.LINE_YS[lineIdx]) < 0.6 &&
+        !i.soiled && (i.isWhite || i.kind === 'school_uniform' || i.kind === 'sando' || i.kind === 'bimpo'))
+    );
+    if (linesWithUnsoiledWhite.length > 0) {
+      return linesWithUnsoiledWhite[Math.floor(Math.random() * linesWithUnsoiledWhite.length)];
+    }
+    const linesWithWhite = linesWithClothes.filter(lineIdx =>
+      this.items.some(i => i.state === 'line' && Math.abs(i.y - this.LINE_YS[lineIdx]) < 0.6 &&
+        (i.isWhite || i.kind === 'school_uniform' || i.kind === 'sando' || i.kind === 'bimpo'))
+    );
+    if (linesWithWhite.length > 0) {
+      return linesWithWhite[Math.floor(Math.random() * linesWithWhite.length)];
+    }
+    if (linesWithClothes.length > 0) {
+      return linesWithClothes[Math.floor(Math.random() * linesWithClothes.length)];
+    }
+    return Math.floor(Math.random() * 3);
   }
 
   updateSmoke(dt) {
     if (this.phase !== 'play' || this.paused || this.isInCutscene()) return;
     const smoke = this.smokeEvent;
 
-    if (!smoke.active) {
-      smoke.nextSmokeIn -= dt;
-      if (smoke.nextSmokeIn <= 0) {
-        smoke.active = true;
-        smoke.timer = 8.5;
-        smoke.lineIdx = Math.floor(Math.random() * 3);
-        this.audio.playSfx('sizzle');
-        this.setNanaySpeech(
-          "Hala! Nag-iihaw na naman si Mang Boy! Usok sa sampayan, iligtas ang mga puti!",
-          "Oh no! Mang Boy is grilling BBQ downstairs! Save the white clothes from the smoke!",
-          3.2, 'urgent'
-        );
-        const p = this.renderer.project(0, this.LINE_YS[smoke.lineIdx], this.LINE_Z);
-        this.addFloater(this.currentLang === 'tl' ? 'USOK ALERT! ♨️' : 'SMOKE ALERT! ♨️', p.sx, p.sy - 14, '#f59e0b', 7);
-      }
-      return;
-    }
-
-    smoke.timer -= dt;
-
-    // Spawn smoke particles wafting horizontally
-    if (Math.random() < 0.70) {
-      smoke.particles.push({
-        x: -this.ROOF_X - 1 + Math.random() * 2,
-        y: this.LINE_YS[smoke.lineIdx] + (Math.random() - 0.5) * 1.6,
-        z: this.LINE_Z - 0.5 + Math.random() * 1.5,
-        vx: 4.6 + Math.random() * 1.8,
-        vy: (Math.random() - 0.5) * 0.4,
-        vz: 0.2 + Math.random() * 0.4,
-        r: 0.65 + Math.random() * 0.5,
-        life: 0,
-        maxLife: 5.6,
-        color: Math.random() < 0.25 ? [75, 70, 65] : [135, 130, 125],
-      });
-    }
-
-    // Update particles
+    // Update existing particles if any exist, even after active phase ends (smooth natural dissipation)
     for (let i = smoke.particles.length - 1; i >= 0; i--) {
       const sp = smoke.particles[i];
       sp.life += dt;
       sp.x += sp.vx * dt;
       sp.y += sp.vy * dt;
       sp.z += sp.vz * dt;
-      sp.r += dt * 0.35;
+      sp.r += dt * 0.12;
       if (sp.life >= sp.maxLife) smoke.particles.splice(i, 1);
     }
 
-    // Check white clothes on that line reached by the wafting smoke plume
+    // 1. Idle Cooldown -> Trigger Telegraph Warning Phase
+    if (!smoke.active && !smoke.warning) {
+      smoke.nextSmokeIn -= dt;
+      if (smoke.nextSmokeIn <= 0) {
+        smoke.lineIdx = this.pickSmokeLine();
+        smoke.warning = true;
+        smoke.warningTimer = smoke.warningDuration || 2.4;
+        smoke.active = false;
+        smoke.particles = [];
+        smoke.startTimer = null;
+        smoke.elapsed = 0;
+        this.audio.playSfx('sizzle');
+        const laneNum = smoke.lineIdx + 1;
+        this.setNanaySpeech(
+          `Hala! Nag-iihaw si Mang Boy! Papunta ang usok sa Sampayan #${laneNum}, iligtas ang mga damit!`,
+          `Oh no! Mang Boy is grilling BBQ! Smoke incoming on Line #${laneNum}, save the clothes!`,
+          3.2, 'urgent'
+        );
+        const p = this.renderer.project(-2.0, this.LINE_YS[smoke.lineIdx], this.LINE_Z);
+        this.addFloater(
+          this.currentLang === 'tl' ? `! USOK SA LINE ${laneNum} !` : `! SMOKE ON LINE ${laneNum} !`,
+          p.sx, p.sy - 28, '#f59e0b', 8
+        );
+      }
+      return;
+    }
+
+    // 2. Telegraph Warning Phase: Prominent Exclamation Mark Warning Indicator Active
+    if (smoke.warning) {
+      smoke.warningTimer -= dt;
+      if (smoke.warningTimer <= 0) {
+        smoke.warning = false;
+        smoke.active = true;
+        smoke.timer = smoke.duration || 12.0;
+        smoke.startTimer = smoke.timer;
+        smoke.elapsed = 0;
+        this.audio.playSfx('sizzle');
+        const p = this.renderer.project(0, this.LINE_YS[smoke.lineIdx], this.LINE_Z);
+        this.addFloater(
+          this.currentLang === 'tl' ? '! USOK DUMATING NA !' : '! SMOKE ARRIVED !',
+          p.sx, p.sy - 15, '#ef4444', 7
+        );
+      }
+      return;
+    }
+
+    // 3. Active Smoke Phase: Smoke billows at fair, reactable travel speed strictly along the single target lane
+    if (smoke.startTimer == null || smoke.timer > smoke.startTimer) {
+      smoke.startTimer = smoke.timer;
+    }
+    smoke.timer -= dt;
+    smoke.elapsed = Math.max(0, smoke.startTimer - smoke.timer);
+
+    const speed = smoke.speed || 2.4; // Controlled, fair speed (player has ample time to react)
+    const smokeFrontX = -this.ROOF_X + smoke.elapsed * speed;
+
+    // Spawn smoke particles wafting horizontally strictly along this targeted line
+    if (Math.random() < 0.65) {
+      smoke.particles.push({
+        x: -this.ROOF_X - 1 + Math.random() * 1.5,
+        y: this.LINE_YS[smoke.lineIdx] + (Math.random() - 0.5) * 0.35, // Tightly focused on single lane
+        z: this.LINE_Z - 0.2 + Math.random() * 0.6,
+        vx: speed + (Math.random() - 0.5) * 0.3, // Travels along the line at the fair speed
+        vy: (Math.random() - 0.5) * 0.04, // Minimal drift, strictly stays on this lane
+        vz: 0.08 + Math.random() * 0.16,
+        r: 0.45 + Math.random() * 0.3,
+        life: 0,
+        maxLife: 11.5,
+        color: Math.random() < 0.3 ? [75, 70, 65] : (Math.random() < 0.5 ? [110, 105, 100] : [145, 140, 135]),
+      });
+    }
+
+    // Check white clothes on that single line reached by the wafting smoke plume
     const targetY = this.LINE_YS[smoke.lineIdx];
-    const smokeFrontX = -this.ROOF_X + (8.5 - smoke.timer) * 4.6;
     for (const item of this.items) {
       if (item.state === 'line' && Math.abs(item.y - targetY) < 0.6) {
         const isWhite = item.isWhite || item.kind === 'school_uniform' || item.kind === 'sando' || item.kind === 'bimpo';
         if (isWhite && !item.soiled && item.x <= smokeFrontX) {
           item.smokeExposure = (item.smokeExposure || 0) + dt;
-          if (item.smokeExposure >= 3.8) {
+          if (item.smokeExposure >= 2.6) {
             item.soiled = 'smoke';
             this.adjustTsinelasMeter(+15);
             const p = this.renderer.project(item.x, item.y, item.z);
-            this.addFloater(this.currentLang === 'tl' ? 'AMOY USOK! ♨️' : 'SMOKED! ♨️', p.sx, p.sy - 10, '#ce1126', 6);
+            this.addFloater(this.currentLang === 'tl' ? 'AMOY USOK!' : 'SMOKE ALERT!', p.sx, p.sy - 10, '#ce1126', 6);
             this.setNanaySpeech(
               "Ayan na nga ba sinasabi ko! Nangamoy uling ang uniporme!",
               "Just as I warned! The uniform smells like charcoal BBQ!",
@@ -2698,7 +3374,12 @@ class SampayanGame {
 
     if (smoke.timer <= 0) {
       smoke.active = false;
-      smoke.nextSmokeIn = 16.0 + Math.random() * 10;
+      smoke.warning = false;
+      smoke.startTimer = null;
+      smoke.elapsed = 0;
+      // Do not hard-clear smoke.particles here; existing puffs smoothly dissipate offscreen
+      const smokeCooldown = this.round === 3 ? (6.0 + Math.random() * 3) : (this.round === 2 ? (8.0 + Math.random() * 3) : (10.0 + Math.random() * 4));
+      smoke.nextSmokeIn = smokeCooldown;
     }
   }
 
@@ -2742,7 +3423,7 @@ class SampayanGame {
           }
           this.setNanaySpeech(tlLine, enLine, 3.2, 'urgent');
           const p = this.renderer.project(chosen.x, chosen.y, chosen.z);
-          this.addFloater(this.currentLang === 'tl' ? 'URGENT UTOS! ⚡' : 'PRIORITY TASK! ⚡', p.sx, p.sy - 14, '#ffd700', 7);
+          this.addFloater(this.currentLang === 'tl' ? 'URGENT UTOS!' : 'PRIORITY TASK!', p.sx, p.sy - 14, '#ffd700', 7);
 
           if (this.onUtosChange) {
             this.onUtosChange({
@@ -2851,9 +3532,181 @@ class SampayanGame {
     ctx.font = '6.5px "Press Start 2P", monospace';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#181210';
-    ctx.fillText(`⚡${Math.ceil(this.utos.timer)}s⚡`, p.sx + 1, arrowY + 1);
+    ctx.fillText(`! ${Math.ceil(this.utos.timer)}s !`, p.sx + 1, arrowY + 1);
     ctx.fillStyle = '#f5b800';
-    ctx.fillText(`⚡${Math.ceil(this.utos.timer)}s⚡`, p.sx, arrowY);
+    ctx.fillText(`! ${Math.ceil(this.utos.timer)}s !`, p.sx, arrowY);
+
+    ctx.restore();
+  }
+
+  drawSmokeWarning() {
+    if (this.phase !== 'play') return;
+    const smoke = this.smokeEvent;
+    if (!smoke || (!smoke.warning && !smoke.active)) return;
+    const ctx = this.renderer.ctx;
+    if (!ctx) return;
+
+    const targetY = this.LINE_YS[smoke.lineIdx];
+    const targetZ = this.LINE_Z;
+
+    ctx.save();
+
+    // 1. Telegraph Lane Highlight (entire clothesline glows with warning color)
+    const pStart = this.renderer.project(-this.POLE_X, targetY, targetZ);
+    const pEnd = this.renderer.project(this.POLE_X, targetY, targetZ);
+    const pulse = 0.5 + 0.5 * Math.sin(this.time * 12);
+
+    if (pStart.d > -1e8 && pEnd.d > -1e8) {
+      // Danger glow along targeted rope
+      ctx.beginPath();
+      ctx.moveTo(pStart.sx, pStart.sy);
+      ctx.lineTo(pEnd.sx, pEnd.sy);
+      ctx.strokeStyle = smoke.warning
+        ? `rgba(239, 68, 68, ${0.45 + pulse * 0.45})`
+        : `rgba(245, 158, 11, ${0.35 + pulse * 0.25})`;
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+
+      // Dashed amber hazard stripe along the rope
+      ctx.beginPath();
+      ctx.moveTo(pStart.sx, pStart.sy);
+      ctx.lineTo(pEnd.sx, pEnd.sy);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 1.5;
+      if (typeof ctx.setLineDash === 'function') ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      if (typeof ctx.setLineDash === 'function') ctx.setLineDash([]);
+
+      // Incoming smoke direction arrow on left post
+      if (smoke.warning) {
+        const ax = Math.round(pStart.sx - 22);
+        const ay = Math.round(pStart.sy);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(ax, ay - 3, 2, 2);
+        ctx.fillRect(ax + 2, ay - 5, 2, 2);
+        ctx.fillRect(ax + 4, ay - 3, 2, 2);
+        ctx.fillRect(ax, ay + 1, 2, 2);
+        ctx.fillRect(ax + 2, ay - 1, 2, 2);
+        ctx.fillRect(ax + 4, ay + 1, 2, 2);
+        ctx.font = '7px "Press Start 2P", monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('>>>', ax + 8, ay);
+      }
+    }
+
+    // 2. Big Exclamation Mark Warning Indicator (prominent, high contrast, great UX)
+    // ONLY display during telegraph warning phase ("warn that it is about to come to that lane")
+    // so it doesn't obstruct player view and drag interactions while smoke is active!
+    if (smoke.warning) {
+      // Project directly to targeted clothesline rope coordinates so the downward arrow touches the line
+      const badgeX = -2.0;
+      const pRope = this.renderer.project(badgeX, targetY, targetZ);
+      if (pRope.d > -1e8) {
+        const bx = Math.round(pRope.sx);
+        const bob = Math.round(Math.sin(this.time * 9) * 3);
+        const dSize = 19; // 38x38 diamond badge
+        const arrowH = 7;
+        const arrowTipY = Math.round(pRope.sy) - 2;
+        const markY = arrowTipY - arrowH - dSize + bob;
+
+        // Outer pulsating danger aura halo
+        ctx.beginPath();
+        ctx.arc(bx, markY, 23 + pulse * 5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(239, 68, 68, ${0.28 + 0.18 * pulse})`;
+        ctx.fill();
+
+        // Big Warning Diamond Badge (38x38px)
+        ctx.beginPath();
+        ctx.moveTo(bx, markY - dSize);
+        ctx.lineTo(bx + dSize, markY);
+        ctx.lineTo(bx, markY + dSize);
+        ctx.lineTo(bx - dSize, markY);
+        if (typeof ctx.closePath === 'function') ctx.closePath();
+
+        ctx.fillStyle = '#facc15'; // High-visibility safety amber
+        ctx.fill();
+        ctx.strokeStyle = '#181210'; // Crisp dark outline
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Inner danger border
+        ctx.beginPath();
+        ctx.moveTo(bx, markY - dSize + 3);
+        ctx.lineTo(bx + dSize - 3, markY);
+        ctx.lineTo(bx, markY + dSize - 3);
+        ctx.lineTo(bx - dSize + 3, markY);
+        if (typeof ctx.closePath === 'function') ctx.closePath();
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // The BIG Exclamation Mark (!) - Prominent, high-contrast, beautiful arcade design
+        // Stem: 7px wide, 16px tall with dark outline and vibrant red/orange core
+        const stemW = 7;
+        const stemH = 16;
+        const stemTop = markY - dSize + 7;
+        ctx.fillStyle = '#181210';
+        ctx.fillRect(bx - stemW / 2 - 1, stemTop - 1, stemW + 2, stemH + 2);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(bx - stemW / 2, stemTop, stemW, stemH);
+        // Highlight core in exclamation stem
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(bx - 1, stemTop + 1, 2, stemH - 4);
+
+        // Dot: 7px wide, 6px tall with dark outline
+        const dotTop = stemTop + stemH + 3;
+        const dotH = 6;
+        ctx.fillStyle = '#181210';
+        ctx.fillRect(bx - stemW / 2 - 1, dotTop - 1, stemW + 2, dotH + 2);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(bx - stemW / 2, dotTop, stemW, dotH);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(bx - 1, dotTop + 1, 2, 2);
+
+        // Downward pointer arrow pointing DIRECTLY to the targeted line rope
+        ctx.beginPath();
+        ctx.moveTo(bx - 5, arrowTipY - arrowH);
+        ctx.lineTo(bx + 5, arrowTipY - arrowH);
+        ctx.lineTo(bx, arrowTipY);
+        if (typeof ctx.closePath === 'function') ctx.closePath();
+        ctx.fillStyle = '#dc2626';
+        ctx.fill();
+        ctx.strokeStyle = '#181210';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Warning Badge Header Banner / Pill
+        const pillW = 96;
+        const pillH = 14;
+        let pillX = bx - pillW / 2;
+        let pillY = markY - dSize - pillH - 3;
+
+        // Ensure pill banner never overlaps top HUD elements (y < 36)
+        if (pillY < 36) {
+          // If close to top HUD (e.g. Line 0), float banner cleanly alongside badge to the right
+          pillX = bx + dSize + 6;
+          pillY = markY - pillH / 2;
+        }
+
+        ctx.fillStyle = '#181210';
+        ctx.fillRect(pillX, pillY, pillW, pillH);
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(pillX, pillY, pillW, pillH);
+
+        ctx.font = '6px "Press Start 2P", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#facc15';
+
+        const timeText = Math.max(0.1, smoke.warningTimer).toFixed(1) + 's';
+        const label = this.currentLang === 'tl'
+          ? `! L${smoke.lineIdx + 1} USOK ${timeText} !`
+          : `! L${smoke.lineIdx + 1} SMOKE ${timeText} !`;
+        ctx.fillText(label, pillX + pillW / 2, pillY + pillH / 2);
+      }
+    }
 
     ctx.restore();
   }
@@ -2867,6 +3720,11 @@ class SampayanGame {
     this.roundBanner = null;
     this.roundTransitionTimer = 0;
     this.floaters.length = 0;
+    if (this.smokeEvent) {
+      this.smokeEvent.active = false;
+      this.smokeEvent.warning = false;
+      this.smokeEvent.particles.length = 0;
+    }
     this.audio.stopBgm();
     this.audio.setWeather(0, 0);
     this.onPauseChange(false);
@@ -3909,7 +4767,7 @@ class SampayanGame {
     const armR = isRaining ? 2.65 + Math.sin(this.time * 6) * 0.35 : isStorming ? 0.65 + Math.sin(this.time * 2.5) * 0.2 : 0.18;
     const armL = isRaining ? 2.60 - Math.sin(this.time * 6) * 0.35 : 0.18;
 
-    const nanayYaw = this.nanayFacingYaw != null ? this.nanayFacingYaw : (this.renderer.yaw + 0.12);
+    const nanayYaw = this.nanayFacingYaw != null ? this.nanayFacingYaw : 0.78;
     this.drawNanay(-8.5, 3.8, nanayYaw, {
       scale: 1.35,
       armR,
@@ -3925,14 +4783,24 @@ class SampayanGame {
       if (item.state !== 'basket' && item.state !== 'lost') this.drawCloth(item, windT);
     }
 
-    if (this.cat && this.cat.active) {
-      this.renderer.castShadow(this.cat.x, this.cat.y, this.cat.z, 0.45);
+    const catsToCast = this.cats && this.cats.length > 0 ? this.cats : (this.cat ? [this.cat] : []);
+    for (const cat of catsToCast) {
+      if (cat.active) {
+        this.renderer.castShadow(cat.x, cat.y, cat.z, 0.45);
+      }
     }
 
     this.renderer.drawLeaves(windT);
     this.renderer.flushShadows();
     this.renderer.applyShadows(this.renderer.groundZ);
     this.renderer.shadeEdges();
+
+    // Cats 3D voxel drawing (depth-buffered against foreground props like batya/tub and hanging clothes)
+    for (const cat of catsToCast) {
+      if (cat.active) {
+        this.renderer.drawMuninCat(cat, this.time);
+      }
+    }
 
     if (this.smokeEvent && this.smokeEvent.particles && this.smokeEvent.particles.length > 0) {
       this.renderer.drawSmokeParticles(this.smokeEvent.particles);
@@ -3966,15 +4834,64 @@ class SampayanGame {
       }
     }
 
-    // Munin Cat pixel art
-    if (this.cat && this.cat.active) {
-      this.renderer.drawMuninCat(this.cat, this.time);
+    // Overhead cat alert icons (question mark, tub exclamation, lightning, etc.)
+    for (const cat of catsToCast) {
+      if (cat.active) {
+        this.renderer.drawCatAlert(cat, this.time);
+      }
+    }
+
+    // Nanay's Flying Spartan Slipper Projectile
+    if (this.flyingSlipper && this.flyingSlipper.active) {
+      this.renderer.drawFlyingSlipper(this.flyingSlipper);
+    }
+
+    // Stun feedback stars around pointer if stunned (crisp pixel-art stars)
+    if (this.stunTimer > 0 && this.pointer) {
+      const ctx = this.renderer.ctx;
+      if (ctx) {
+        ctx.save();
+        const starAngle = this.time * 8;
+        const starR = 14;
+        const drawPixelStar = (cx, cy) => {
+          const starRows = [
+            "..#..",
+            ".###.",
+            "#####",
+            ".###.",
+            ".#.#."
+          ];
+          ctx.fillStyle = '#181210';
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+              if (starRows[r][c] === '#') {
+                ctx.fillRect(Math.round(cx - 2 + c) - 1, Math.round(cy - 2 + r), 3, 1);
+                ctx.fillRect(Math.round(cx - 2 + c), Math.round(cy - 2 + r) - 1, 1, 3);
+              }
+            }
+          }
+          ctx.fillStyle = '#facc15';
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+              if (starRows[r][c] === '#') {
+                ctx.fillRect(Math.round(cx - 2 + c), Math.round(cy - 2 + r), 1, 1);
+              }
+            }
+          }
+        };
+        drawPixelStar(this.pointer.x + Math.cos(starAngle) * starR, this.pointer.y + Math.sin(starAngle) * starR);
+        drawPixelStar(this.pointer.x - Math.cos(starAngle) * starR, this.pointer.y - Math.sin(starAngle) * starR);
+        ctx.restore();
+      }
     }
 
     // Urgent Utos beacon indicator
     if (this.utos && this.utos.active && this.utos.item) {
       this.drawUtosBeacon(this.utos.item);
     }
+
+    // Mang Boy's Smoke Lane Telegraph Warning & Big Exclamation Mark
+    this.drawSmokeWarning();
 
     this.drawFloaters();
     this.drawNanayBubble();
@@ -4195,17 +5112,30 @@ class SampayanGame {
         }
       }
 
-      // Munin Cat interaction ("Tsupe!")
-      if (this.cat && this.cat.active && this.cat.state !== 'flee') {
-        const catProj = this.renderer.project(this.cat.x, this.cat.y, this.cat.z);
-        if (catProj.d > -1e8) {
-          const dx = this.pointer.x - catProj.sx;
-          const dy = this.pointer.y - (catProj.sy - 12);
-          if (Math.abs(dx) <= 24 && Math.abs(dy) <= 20) {
-            this.shooCat();
-            return;
+      // Puspin Cat interaction ("Tsupe!") - checks all active cats first
+      // The player can still frantically shoo cats away even while carry action is stunned!
+      const activeCats = this.cats && this.cats.length > 0 ? this.cats : (this.cat ? [this.cat] : []);
+      for (const cat of activeCats) {
+        if (cat.active && cat.state !== 'flee') {
+          const catProj = this.renderer.project(cat.x, cat.y, cat.z);
+          if (catProj.d > -1e8) {
+            const dx = this.pointer.x - catProj.sx;
+            const dy = this.pointer.y - (catProj.sy - 12);
+            if (Math.abs(dx) <= 26 && Math.abs(dy) <= 22) {
+              this.shooCat(cat);
+              return;
+            }
           }
         }
+      }
+
+      // Check if player carry action stunned by Nanay's flying slipper strike
+      if (this.stunTimer > 0) {
+        this.addFloater(
+          this.currentLang === 'tl' ? 'MANHID ANG KAMAY! 🩴' : 'HANDS NUMBED! 🩴',
+          this.pointer.x, this.pointer.y - 12, '#ef4444', 4
+        );
+        return;
       }
 
       // If already holding an item, clicking drops or banks it (ignore clicks during auto-salba flight)
@@ -4222,7 +5152,7 @@ class SampayanGame {
             this.heldItems.push(secondItem);
             this.audio.playSfx('pop');
             const p = this.renderer.project(secondItem.x, secondItem.y, secondItem.z);
-            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA! 🧺' : 'MULTI-CARRY! 🧺', p.sx, p.sy - 12, '#38bdf8', 6);
+            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA!' : 'MULTI-CARRY!', p.sx, p.sy - 12, '#38bdf8', 6);
             return;
           }
         }
@@ -4249,6 +5179,7 @@ class SampayanGame {
 
       // Decisive yank pull for stubborn 2-sipit heavy items during drag
       if (!this.held && this.pointerDownPos && this.pointerDownItem && this.pointerDownItem.state === 'line' && this.pointerDownItem.pinsRemaining === 1) {
+        if (this.stunTimer > 0) return;
         const cur = this.toCanvas(e);
         const distMoved = Math.hypot(cur.x - this.pointerDownPos.x, cur.y - this.pointerDownPos.y);
         if (distMoved > 12) {
@@ -4278,7 +5209,7 @@ class SampayanGame {
             this.heldItems.push(secondItem);
             this.audio.playSfx('pop');
             const p = this.renderer.project(secondItem.x, secondItem.y, secondItem.z);
-            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA! 🧺' : 'MULTI-CARRY! 🧺', p.sx, p.sy - 12, '#38bdf8', 6);
+            this.addFloater(this.currentLang === 'tl' ? 'MULTI-SALBA!' : 'MULTI-CARRY!', p.sx, p.sy - 12, '#38bdf8', 6);
           }
         }
       }

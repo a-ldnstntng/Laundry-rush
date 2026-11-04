@@ -565,7 +565,7 @@ class SampayanRenderer {
       const progress = p.life / p.maxLife;
       const alpha = Math.sin(progress * Math.PI) * 0.72;
       if (alpha <= 0.04) continue;
-      const sr = Math.max(2, Math.round(p.r * this.scale * (0.6 + progress * 0.8)));
+      const sr = Math.min(15, Math.max(2, Math.round(p.r * this.scale * (0.6 + progress * 0.8))));
       const cx = proj.sx | 0, cy = proj.sy | 0;
       const ramp = this.rampOf(p.color || [115, 110, 105]);
 
@@ -584,23 +584,45 @@ class SampayanRenderer {
   }
 
   drawMuninCat(cat, time) {
-    if (!cat || !cat.active || !this.ctx) return;
+    if (!cat || !cat.active) return;
     const proj = this.project(cat.x, cat.y, cat.z);
     if (proj.d < -1e8) return;
 
-    const ctx = this.ctx;
     const pxScale = 2; // Crisp 2x integer pixel blocks
     const facing = cat.facing || 1; // 1 = right, -1 = left
 
-    const CAT_PAL = {
-      '#': '#181210', // Dark ink outline
-      'o': '#ea580c', // Orange tabby fur
-      'O': '#9a3412', // Tabby stripes / shadow
-      'w': '#fffbeb', // White bib / chest / paws
-      'p': '#fb7185', // Pink nose / inner ear
-      'e': '#16a34a', // Emerald green eye
-      'y': '#fef08a', // Eye highlight
+    const CAT_PALS_U32 = {
+      munin: {
+        '#': this.rgb(24, 18, 16),
+        'o': this.rgb(234, 88, 12),
+        'O': this.rgb(154, 52, 18),
+        'w': this.rgb(255, 251, 235),
+        'p': this.rgb(251, 113, 133),
+        'e': this.rgb(22, 163, 74),
+        'y': this.rgb(254, 240, 138),
+      },
+      siopao: {
+        '#': this.rgb(24, 18, 16),
+        'o': this.rgb(253, 224, 71),
+        'O': this.rgb(194, 65, 12),
+        'w': this.rgb(255, 255, 255),
+        'p': this.rgb(251, 113, 133),
+        'e': this.rgb(202, 138, 4),
+        'y': this.rgb(41, 37, 36),
+      },
+      kitkit: {
+        '#': this.rgb(15, 23, 42),
+        'o': this.rgb(51, 65, 85),
+        'O': this.rgb(30, 41, 59),
+        'w': this.rgb(248, 250, 252),
+        'p': this.rgb(244, 114, 182),
+        'e': this.rgb(6, 182, 212),
+        'y': this.rgb(224, 242, 254),
+      },
     };
+
+    const catType = cat.type || 'munin';
+    const CAT_PAL = CAT_PALS_U32[catType] || CAT_PALS_U32.munin;
 
     const FRAMES = {
       walk_0: [
@@ -660,6 +682,7 @@ class SampayanRenderer {
         "....###..###...."
       ],
       flee: [
+        "................",
         "....##...##.....",
         "...#po#.#op#....",
         "..#ooooooooo#...",
@@ -670,8 +693,7 @@ class SampayanRenderer {
         "...#oOoOoOo#..#.",
         "..#oo#...#oo##..",
         ".#ww#.....#ww#..",
-        ".###.......###..",
-        "................"
+        ".###.......###.."
       ]
     };
 
@@ -680,6 +702,12 @@ class SampayanRenderer {
       frameKey = 'flee';
     } else if (cat.state === 'knead_nap') {
       frameKey = Math.floor(time * 4) % 2 === 0 ? 'sit' : 'walk_0';
+    } else if (cat.state === 'tip_basket') {
+      frameKey = Math.floor(time * 6) % 2 === 0 ? 'swat' : 'sit';
+    } else if (cat.state === 'stalk_basket') {
+      frameKey = Math.floor(time * 7) % 2 === 0 ? 'walk_0' : 'walk_1';
+    } else if (cat.state === 'zip_line') {
+      frameKey = Math.floor(time * 12) % 2 === 0 ? 'walk_0' : 'walk_1';
     } else if (cat.state === 'jump_line') {
       frameKey = 'swat';
     } else {
@@ -692,36 +720,149 @@ class SampayanRenderer {
     const drawW = spriteW * pxScale;
     const drawH = spriteH * pxScale;
 
-    // Center sprite over projected base
-    const startX = Math.round(proj.sx - drawW / 2);
-    const startY = Math.round(proj.sy - drawH);
+    // Grounding: sprite bottom touches projected ground position exactly
+    let startX = Math.round(proj.sx - drawW / 2);
+    let startY = Math.round(proj.sy - drawH);
+    if (cat.animShake > 0) {
+      startX += Math.round(Math.sin(time * 36) * 3);
+    }
 
-    ctx.save();
+    // Depth-buffer tested pixel rasterization with 3D elevation gradient per row
+    const depthStep = (pxScale * this.sin) / (this.scale * this.cos);
     for (let r = 0; r < Math.min(spriteH, rows.length); r++) {
       const line = rows[r];
       if (!line) continue;
+      const rowD = proj.d + (spriteH - 1 - r) * depthStep;
       for (let c = 0; c < Math.min(spriteW, line.length); c++) {
         const char = line[c];
         if (char === '.') continue;
-        const color = CAT_PAL[char];
-        if (!color) continue;
+        const colorU32 = CAT_PAL[char];
+        if (colorU32 === undefined) continue;
         const colIdx = facing === -1 ? (spriteW - 1 - c) : c;
-        ctx.fillStyle = color;
-        ctx.fillRect(startX + colIdx * pxScale, startY + r * pxScale, pxScale, pxScale);
+        for (let dy = 0; dy < pxScale; dy++) {
+          const iy = startY + r * pxScale + dy;
+          if (iy < 0 || iy >= this.height) continue;
+          for (let dx = 0; dx < pxScale; dx++) {
+            const ix = startX + colIdx * pxScale + dx;
+            if (ix < 0 || ix >= this.width) continue;
+            const idx = iy * this.width + ix;
+            if (rowD >= this.zb[idx] - 0.04) {
+              this.zb[idx] = rowD;
+              this.pix[idx] = colorU32;
+            }
+          }
+        }
       }
     }
+  }
 
-    // Floating question mark or exclamation mark when stalking or alarmed
-    if (cat.state === 'stalk') {
-      ctx.fillStyle = '#181210';
-      ctx.font = '6px "Press Start 2P", monospace';
-      ctx.fillText('?', startX + drawW / 2 - 2, startY - 3);
-    } else if (cat.state === 'flee') {
-      ctx.fillStyle = '#ce1126';
-      ctx.font = '7px "Press Start 2P", monospace';
-      ctx.fillText('!', startX + drawW / 2 - 2, startY - 4);
+  drawCatAlert(cat, time) {
+    if (!cat || !cat.active || !this.ctx) return;
+    const proj = this.project(cat.x, cat.y, cat.z);
+    if (proj.d < -1e8) return;
+
+    const ctx = this.ctx;
+    const pxScale = 2;
+    const spriteW = 16;
+    const spriteH = 12;
+    const drawW = spriteW * pxScale;
+    const drawH = spriteH * pxScale;
+
+    let startX = Math.round(proj.sx - drawW / 2);
+    let startY = Math.round(proj.sy - drawH);
+    if (cat.animShake > 0) {
+      startX += Math.round(Math.sin(time * 36) * 3);
     }
 
+    const cx = Math.round(startX + drawW / 2);
+    const cy = startY - 4;
+
+    ctx.save();
+    if (cat.state === 'stalk') {
+      // Crisp 5x7 pixel question mark
+      const qIcon = [
+        ".###.",
+        "#...#",
+        "...#.",
+        "..#..",
+        "..#..",
+        ".....",
+        "..#.."
+      ];
+      ctx.fillStyle = '#181210';
+      for (let r = 0; r < qIcon.length; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (qIcon[r][c] === '#') ctx.fillRect(cx - 2 + c, cy - 6 + r, 1, 1);
+        }
+      }
+    } else if (cat.state === 'stalk_basket') {
+      // Crisp pixel tub warning: blue tub outline + red exclamation
+      const tubIcon = [
+        "....#.",
+        "....#.",
+        "....#.",
+        "bb.bb.",
+        "#bbbb#",
+        " #bb# ",
+        "  ##  "
+      ];
+      for (let r = 0; r < tubIcon.length; r++) {
+        for (let c = 0; c < 6; c++) {
+          const ch = tubIcon[r][c];
+          if (ch === '#') {
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(cx - 3 + c, cy - 6 + r, 1, 1);
+          } else if (ch === 'b') {
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(cx - 3 + c, cy - 6 + r, 1, 1);
+          }
+        }
+      }
+    } else if (cat.state === 'tip_basket') {
+      // Crisp pixel-art red paw print
+      const pawIcon = [
+        "#.#.#",
+        "#.#.#",
+        ".###.",
+        "#####",
+        "#####",
+        ".###."
+      ];
+      ctx.fillStyle = '#ef4444';
+      for (let r = 0; r < pawIcon.length; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (pawIcon[r][c] === '#') ctx.fillRect(cx - 2 + c, cy - 5 + r, 1, 1);
+        }
+      }
+    } else if (cat.state === 'zip_line') {
+      // Crisp pixel-art yellow lightning bolt
+      const boltIcon = [
+        "..##",
+        ".##.",
+        "####",
+        "..##",
+        ".##.",
+        "##..",
+        "#..."
+      ];
+      ctx.fillStyle = '#facc15';
+      for (let r = 0; r < boltIcon.length; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (boltIcon[r][c] === '#') ctx.fillRect(cx - 2 + c, cy - 6 + r, 1, 1);
+        }
+      }
+    } else if (cat.state === 'flee') {
+      // Crisp pixel red exclamation
+      ctx.fillStyle = '#ce1126';
+      ctx.fillRect(cx - 1, cy - 7, 2, 4);
+      ctx.fillRect(cx - 1, cy - 2, 2, 2);
+    }
+
+    if (cat.type === 'siopao' && cat.hitsRemaining === 1 && cat.state !== 'flee') {
+      ctx.font = '6px "Press Start 2P", monospace';
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText('1!', startX + drawW + 1, startY - 2);
+    }
     ctx.restore();
   }
 
@@ -784,6 +925,114 @@ class SampayanRenderer {
     ctx.fillRect(x + 9 * px, y + 9 * px, 2 * px, 3 * px);
 
     ctx.restore();
+  }
+
+  drawFlyingSlipper(slipper) {
+    if (!slipper || !slipper.active || !this.ctx) return;
+    const ctx = this.ctx;
+
+    // 1. Telegraph warning crosshair & shadow on the ground at the landing spot
+    const targetProj = this.project(slipper.tx, slipper.ty, slipper.tz);
+    if (targetProj.d > -1e8) {
+      ctx.save();
+      const pulse = 0.65 + 0.35 * Math.sin(slipper.time * 26);
+      // Pulsing red impact zone
+      ctx.beginPath();
+      if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(targetProj.sx, targetProj.sy, 16 * pulse, 8 * pulse, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(targetProj.sx, targetProj.sy, 12 * pulse, 0, Math.PI * 2);
+      }
+      ctx.fillStyle = `rgba(220, 38, 38, ${0.28 * pulse})`;
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = `rgba(239, 68, 68, ${0.9 * pulse})`;
+      ctx.stroke();
+
+      // Crisp pixel-art warning indicator
+      const tx = Math.round(targetProj.sx);
+      const ty = Math.round(targetProj.sy - 15);
+      const SLIPPER_ICON = [
+        "..rrrr..",
+        ".rrrrrr.",
+        ".rrwwrr.",
+        ".rrwwrr.",
+        ".rrrrrr.",
+        ".rrrrrr.",
+        "..rrrr.."
+      ];
+      for (let r = 0; r < SLIPPER_ICON.length; r++) {
+        const row = SLIPPER_ICON[r];
+        for (let c = 0; c < row.length; c++) {
+          const ch = row[c];
+          if (ch === '.') continue;
+          ctx.fillStyle = ch === 'w' ? '#ffffff' : '#dc2626';
+          ctx.fillRect(tx - 7 + c * 1.5, ty + r * 1.5, 1.5, 1.5);
+        }
+      }
+      ctx.font = '7px "Press Start 2P", monospace';
+      ctx.fillStyle = '#dc2626';
+      ctx.textAlign = 'left';
+      ctx.fillText('!', tx + 6, ty + 8);
+      ctx.restore();
+    }
+
+    // 2. Dynamic ground shadow directly under the mid-air slipper
+    const shadowProj = this.project(slipper.x, slipper.y, slipper.tz);
+    if (shadowProj.d > -1e8) {
+      const heightFactor = Math.max(0.12, 1 - (slipper.z - slipper.tz) / 7.5);
+      ctx.save();
+      ctx.beginPath();
+      if (typeof ctx.ellipse === 'function') {
+        ctx.ellipse(shadowProj.sx, shadowProj.sy, 15 * heightFactor, 6 * heightFactor, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(shadowProj.sx, shadowProj.sy, 10 * heightFactor, 0, Math.PI * 2);
+      }
+      ctx.fillStyle = `rgba(24, 18, 16, ${0.45 * heightFactor})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 3. Render the spinning red Spartan flying slipper
+    const proj = this.project(slipper.x, slipper.y, slipper.z);
+    if (proj.d > -1e8) {
+      ctx.save();
+      if (typeof ctx.translate === 'function') ctx.translate(proj.sx, proj.sy);
+      if (typeof ctx.rotate === 'function') ctx.rotate(slipper.rot || 0);
+
+      const px = 2; // Crisp 2x pixel scale
+      const w = 12 * px;
+      const h = 20 * px;
+
+      // Outer ink border
+      ctx.fillStyle = '#181210';
+      ctx.fillRect(-w / 2 - px, -h / 2 - px, w + 2 * px, h + 2 * px);
+
+      // Red Spartan sole
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+
+      // Inner bevel highlight
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(-w / 2 + px, -h / 2 + px, w - 2 * px, 2 * px);
+
+      // Yellow Spartan Y-strap
+      ctx.fillStyle = '#facc15';
+      // Center toe-post
+      ctx.fillRect(-px, -h / 2 + 5 * px, 2 * px, 3 * px);
+      // Left and right strap branches
+      ctx.fillRect(-w / 2 + 2 * px, -h / 2 + 8 * px, 4 * px, 2 * px);
+      ctx.fillRect(w / 2 - 6 * px, -h / 2 + 8 * px, 4 * px, 2 * px);
+      ctx.fillRect(-w / 2 + px, -h / 2 + 10 * px, 2 * px, 3 * px);
+      ctx.fillRect(w / 2 - 3 * px, -h / 2 + 10 * px, 2 * px, 3 * px);
+
+      // Spin motion blur streaks
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.75)';
+      ctx.fillRect(-w / 2 - 4 * px, -2 * px, 3 * px, px);
+      ctx.fillRect(w / 2 + px, 2 * px, 3 * px, px);
+
+      ctx.restore();
+    }
   }
 
   /* ---------- Canvas Sizing & Frame Presentation ---------- */
