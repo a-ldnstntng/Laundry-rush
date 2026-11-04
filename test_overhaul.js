@@ -687,11 +687,38 @@ console.log('\n--- Test 12: Cat Targeting Laundry Tub & Spilling Banked Clothes 
   assert.strictEqual(cat.state, 'stalk_basket', 'Cat must target banked laundry tub');
   assert.strictEqual(cat.targetType, 'basket');
 
-  // Cat reaches the tub
+  // Cat walks to the visible interaction spot beside the tub.
   cat.x = game.BASKET.x;
   cat.y = game.BASKET.y;
-  game.update(0.1);
+  for (let i = 0; i < 120 && cat.state === 'stalk_basket'; i++) game.updateSingleCat(cat, 1 / 60);
   assert.strictEqual(cat.state, 'tip_basket', 'Cat must enter tip_basket state at the tub');
+
+  // Reproduce approaches from either side, then measure the actual depth-tested
+  // sprite against the tub and banked pile in both clawing animation frames.
+  for (const type of ['munin', 'siopao', 'kitkit']) {
+    for (const side of [-1, 1]) {
+      const visitor = game.createCat(type, {
+        active: true, state: 'stalk_basket',
+        x: game.BASKET.x + side * 2, y: game.BASKET.y + 0.6,
+      });
+      for (let i = 0; i < 300 && visitor.state === 'stalk_basket'; i++) game.updateSingleCat(visitor, 1 / 60);
+      assert.strictEqual(visitor.state, 'tip_basket', 'Approaching cat must reach the tub');
+      assert.strictEqual(visitor.facing, 1, 'Interacting cat must face the tub');
+      for (const time of [0, 0.2]) {
+        renderer.pix.fill(0);
+        renderer.zb.fill(-1e9);
+        renderer.drawMuninCat(visitor, time);
+        const fullSprite = renderer.pix.filter(pixel => pixel !== 0).length;
+        renderer.clear();
+        game.drawBatya(0.35);
+        game.drawPile();
+        const beforeCat = renderer.pix.slice();
+        renderer.drawMuninCat(visitor, time);
+        const visible = renderer.pix.filter((pixel, i) => pixel !== beforeCat[i]).length;
+        assert(visible >= fullSprite * 0.85, `${type} must remain visible while clawing the batya`);
+      }
+    }
+  }
 
   // Let tip timer expire -> tips tub, knocks clothes out onto ground with paw soiling
   game.score = 50;
@@ -931,9 +958,19 @@ console.log('\n--- Test 16: Visual Polish, Depth Buffering & Geometry Fixes ---'
     assert(!emojiRegex.test(m), `Floater call must not contain emoji: ${m}`);
   }
 
-  // 4. Verify Cat Flee sprite frame is grounded at row 11
-  const engineCode = fs.readFileSync('./engine.js', 'utf8');
-  assert(/flee:\s*\[\r?\n\s*"................"/.test(engineCode), 'Flee frame must have empty row at top and grounded paws at row 11');
+  // 4. Flee paws must meet the projected ground in both directions.
+  for (const type of ['munin', 'siopao', 'kitkit']) {
+    for (const facing of [-1, 1]) {
+      renderer.pix.fill(0);
+      renderer.zb.fill(-1e9);
+      const cat = { active: true, type, facing, state: 'flee', x: 0, y: 0, z: 0 };
+      renderer.drawMuninCat(cat, 0);
+      const groundY = Math.round(renderer.project(0, 0, 0).sy);
+      const pawRow = renderer.pix.subarray((groundY - 1) * renderer.width, groundY * renderer.width);
+      assert(pawRow.some(pixel => pixel !== 0), `${type} flee paws must touch the ground`);
+      assert(!renderer.pix.subarray(groundY * renderer.width).some(pixel => pixel !== 0), `${type} must not extend below ground`);
+    }
+  }
 
   console.log('✓ Visual polish fixes (batya pile visibility, Nanay 3/4 yaw, grounded flee frame, clean pixel floaters) verified');
 }

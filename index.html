@@ -70,6 +70,12 @@
     background: #2e7ee6;
   }
   #c:active { cursor: grabbing; }
+  button:focus-visible,
+  #c:focus-visible,
+  #rules-dialog-card:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 4px;
+  }
 
   #hud-tsinelas-canvas {
     background: transparent !important;
@@ -606,6 +612,24 @@
     white-space: nowrap;
   }
 
+  /* Help stays escapable even when its instructions scroll. */
+  .rules-toolbar {
+    position: sticky;
+    top: -22px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--card-bg);
+    border-bottom: 2px solid #ded8cc;
+    padding: 16px 22px 12px;
+    margin: -22px -22px 14px;
+  }
+  .rules-toolbar h2 { font: 11px/1.5 'Press Start 2P', monospace; text-align: left; }
+  #btn-dismiss-rules { min-height: 44px; flex-shrink: 0; }
+  #portrait-guidance { display: none; }
+
   /* Rules Card */
   .rules-nanay-avatar {
     width: 64px;
@@ -661,155 +685,6 @@
     border: 1px solid var(--ink);
   }
 
-  /* Nanay's Judgment / Results Screen — Open Hero Layout */
-  .results-hero-layout {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 760px;
-    height: 100%;
-    max-height: 760px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
-    pointer-events: none;
-  }
-  .results-hero-top,
-  .results-hero-bottom {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-  }
-  .judgment-header {
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(22px, 3.8vw, 38px);
-    line-height: 1.15;
-    color: var(--accent-blue);
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-    text-shadow:
-      -3px -3px 0px #fffefb,
-       3px -3px 0px #fffefb,
-      -3px  3px 0px #fffefb,
-       3px  3px 0px #fffefb,
-       0px -3px 0px #fffefb,
-       0px  3px 0px #fffefb,
-      -3px  0px 0px #fffefb,
-       3px  0px 0px #fffefb,
-       5px  5px 0px var(--accent-yellow),
-       8px  8px 0px var(--ink);
-  }
-  .results-badge-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-  }
-  .grade-stamp {
-    display: inline-block;
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(20px, 3vw, 28px);
-    padding: 6px 18px;
-    border: 4px dashed currentColor;
-    box-shadow: 4px 4px 0px var(--ink);
-    transform: rotate(-2deg);
-    margin: 2px 0;
-    letter-spacing: 2px;
-  }
-  .grade-s { color: #b45309; background: #fef3c7; border-color: #d97706; }
-  .grade-a { color: #047857; background: #d1fae5; border-color: #059669; }
-  .grade-b { color: #1d4ed8; background: #dbeafe; border-color: #2563eb; }
-  .grade-f { color: #b91c1c; background: #fee2e2; border-color: #dc2626; }
-
-  .judgment-commentary {
-    font-family: 'VT323', monospace;
-    font-size: 19px;
-    line-height: 1.18;
-    color: var(--ink);
-    background: rgba(251, 249, 244, 0.95);
-    border: 3px solid var(--ink);
-    box-shadow: 4px 4px 0px var(--ink);
-    padding: 8px 14px;
-    max-width: 560px;
-    text-align: center;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    width: 100%;
-    max-width: 620px;
-    margin-bottom: 10px;
-    text-align: center;
-  }
-  .stat-box {
-    background: rgba(255, 254, 251, 0.96);
-    border: 3px solid var(--ink);
-    box-shadow: 3px 3px 0px var(--ink);
-    padding: 6px 8px;
-  }
-  .stat-label {
-    font-family: 'Press Start 2P', monospace;
-    color: var(--muted);
-    font-size: 6.5px;
-    line-height: 1.25;
-    margin-bottom: 4px;
-  }
-  .stat-value {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 12px;
-    color: var(--ink);
-  }
-  .stat-value.highlight {
-    color: var(--accent-blue);
-  }
-
-  .new-record-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--accent-red);
-    color: #fff;
-    padding: 5px 10px;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
-    border: 3px solid var(--ink);
-    box-shadow: 3px 3px 0px var(--ink);
-    animation: pixel-blink 0.8s steps(2, start) infinite;
-  }
-  @keyframes pixel-blink {
-    0% { opacity: 1; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
-  }
-  #btn-play-again.btn-primary {
-    background: var(--accent-yellow);
-    color: var(--ink);
-    font-size: clamp(14px, 1.9vw, 18px);
-    padding: 15px 26px;
-    border: 4px solid var(--ink);
-    box-shadow: 6px 6px 0px var(--ink);
-  }
-  #btn-play-again.btn-primary:hover {
-    background: #ffd034;
-    transform: translate(-2px, -2px);
-    box-shadow: 8px 8px 0px var(--ink);
-  }
-  #btn-back-title {
-    background: #fffefb;
-    color: var(--ink);
-    font-size: clamp(11px, 1.4vw, 14px);
-    padding: 12px 22px;
-    border: 3px solid var(--ink);
-    box-shadow: 5px 5px 0px var(--ink);
-  }
-
   #hud.hidden {
     display: none !important;
   }
@@ -843,13 +718,27 @@
     .title-best-pill { font-size: 8px; padding: 6px 10px; margin-bottom: 8px; }
     .title-footer { margin-top: 8px; font-size: 14px; }
     .dialog-card { padding: 16px 14px; max-width: 94vw; outline-offset: -5px; }
+    .rules-toolbar { top: -16px; margin: -16px -14px 14px; padding: 12px 14px; }
     .title-actions { gap: 8px; max-width: 92vw; }
     #btn-play.btn-primary { padding: 13px 18px; font-size: 13px; }
     #btn-rules { padding: 10px 16px; font-size: 10px; }
     .title-utility-row button { padding: 9px 8px; font-size: 8px; }
     button { padding: 7px 10px; font-size: 8px; }
     button.btn-primary { padding: 10px 14px; font-size: 10px; }
-    .hud-tip { display: none; }
+    .hud-bottom { flex-direction: column; align-items: stretch; gap: 8px; }
+    .hud-bottom > .hud-pill { align-self: flex-end; }
+    .hud-tip {
+      display: block;
+      position: static;
+      transform: none;
+      max-width: none;
+      width: 100%;
+      white-space: normal;
+      overflow: visible;
+      font-size: 18px;
+      padding: 8px 10px;
+      letter-spacing: 0;
+    }
     .hud-top { gap: 4px; }
     .hud-pill { padding: 4px 5px; font-size: 7px; }
     .hud-pill b { font-size: 8px; }
@@ -861,7 +750,25 @@
     .stat-label { font-size: 6.5px; }
     .stat-value { font-size: 10px; }
   }
+  @media (pointer: coarse), (max-width: 600px) {
+    .hud-controls-group button { min-width: 44px; min-height: 44px; }
+    #modal-pause button, #modal-rules button, #modal-confirm-menu button { min-height: 44px; }
+    .hud-controls-group { gap: 8px; }
+  }
+  @media (max-width: 600px) and (orientation: portrait) {
+    #portrait-guidance { display: block; font-size: 18px; line-height: 1.15; text-align: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #stage, .title-animated-bg .pixel-cloud, .breeze-streak, .title-logo, .new-record-badge,
+    .combo-pill, .tsinelas-pill.rage-danger, .utos-pill {
+      animation: none;
+    }
+    .overlay-screen, button, .weather-bar-fill, .tsinelas-bar-fill {
+      transition: none;
+    }
+  }
 </style>
+<link rel="stylesheet" href="results.css">
 </head>
 <body>
 
@@ -917,6 +824,7 @@
 
   <div class="hud-bottom">
     <div class="hud-tip" id="hud-status">Drag clothes into the blue basin before it rains! (Space = auto-save)</div>
+    <div id="portrait-guidance">For a larger view, turn your phone sideways.</div>
     <div class="hud-pill">
       <svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="1" width="3" height="1" fill="#1c1b19"/><rect x="11" y="1" width="3" height="1" fill="#1c1b19"/><rect x="1" y="2" width="1" height="1" fill="#1c1b19"/><rect x="2" y="2" width="3" height="1" fill="#ffffff"/><rect x="5" y="2" width="1" height="1" fill="#1c1b19"/><rect x="10" y="2" width="1" height="1" fill="#1c1b19"/><rect x="11" y="2" width="3" height="1" fill="#ffffff"/><rect x="14" y="2" width="1" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="3" height="1" fill="#ffffff"/><rect x="5" y="3" width="1" height="1" fill="#1c1b19"/><rect x="10" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="3" height="1" fill="#ffffff"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="1" y="4" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="4" height="1" fill="#ffffff"/><rect x="6" y="4" width="4" height="1" fill="#1c1b19"/><rect x="10" y="4" width="4" height="1" fill="#ffffff"/><rect x="14" y="4" width="1" height="1" fill="#1c1b19"/><rect x="1" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="5" width="12" height="1" fill="#ffffff"/><rect x="14" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="6" width="1" height="1" fill="#1c1b19"/><rect x="3" y="6" width="10" height="1" fill="#ffffff"/><rect x="13" y="6" width="1" height="1" fill="#1c1b19"/><rect x="2" y="7" width="1" height="1" fill="#1c1b19"/><rect x="3" y="7" width="10" height="1" fill="#ffffff"/><rect x="13" y="7" width="1" height="1" fill="#1c1b19"/><rect x="2" y="8" width="1" height="1" fill="#1c1b19"/><rect x="3" y="8" width="10" height="1" fill="#ffffff"/><rect x="13" y="8" width="1" height="1" fill="#1c1b19"/><rect x="2" y="9" width="1" height="1" fill="#1c1b19"/><rect x="3" y="9" width="10" height="1" fill="#ffffff"/><rect x="13" y="9" width="1" height="1" fill="#1c1b19"/><rect x="2" y="10" width="1" height="1" fill="#1c1b19"/><rect x="3" y="10" width="10" height="1" fill="#ffffff"/><rect x="13" y="10" width="1" height="1" fill="#1c1b19"/><rect x="2" y="11" width="1" height="1" fill="#1c1b19"/><rect x="3" y="11" width="10" height="1" fill="#ffffff"/><rect x="13" y="11" width="1" height="1" fill="#1c1b19"/><rect x="2" y="12" width="1" height="1" fill="#1c1b19"/><rect x="3" y="12" width="10" height="1" fill="#ffffff"/><rect x="13" y="12" width="1" height="1" fill="#1c1b19"/><rect x="2" y="13" width="12" height="1" fill="#1c1b19"/></svg> <span id="label-hud-count">SAVED:</span> <b id="hud-count">0/19</b>
     </div>
@@ -962,8 +870,12 @@
 </div>
 
 <!-- How To Play Modal -->
-<div id="modal-rules" class="overlay-screen hidden">
-  <div class="dialog-card">
+<div id="modal-rules" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-label="How to play">
+  <div id="rules-dialog-card" class="dialog-card" tabindex="-1">
+    <div class="rules-toolbar">
+      <h2 id="rules-heading">HOW TO PLAY</h2>
+      <button id="btn-dismiss-rules" type="button">BACK</button>
+    </div>
     <div class="rules-nanay-avatar" title="Nanay">
       <svg class="pixel-avatar" width="64" height="64" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="12" y="1" width="8" height="1" fill="#1c1b19"/><rect x="11" y="2" width="1" height="1" fill="#1c1b19"/><rect x="12" y="2" width="8" height="1" fill="#2b2320"/><rect x="20" y="2" width="1" height="1" fill="#1c1b19"/><rect x="10" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="10" height="1" fill="#2b2320"/><rect x="21" y="3" width="1" height="1" fill="#1c1b19"/><rect x="10" y="4" width="1" height="1" fill="#1c1b19"/><rect x="11" y="4" width="3" height="1" fill="#2b2320"/><rect x="14" y="4" width="1" height="1" fill="#1c1b19"/><rect x="15" y="4" width="2" height="1" fill="#f85c8e"/><rect x="17" y="4" width="1" height="1" fill="#1c1b19"/><rect x="18" y="4" width="3" height="1" fill="#2b2320"/><rect x="21" y="4" width="1" height="1" fill="#1c1b19"/><rect x="11" y="5" width="1" height="1" fill="#1c1b19"/><rect x="12" y="5" width="2" height="1" fill="#2b2320"/><rect x="14" y="5" width="1" height="1" fill="#1c1b19"/><rect x="15" y="5" width="2" height="1" fill="#f85c8e"/><rect x="17" y="5" width="1" height="1" fill="#1c1b19"/><rect x="18" y="5" width="2" height="1" fill="#2b2320"/><rect x="20" y="5" width="1" height="1" fill="#1c1b19"/><rect x="10" y="6" width="2" height="1" fill="#1c1b19"/><rect x="12" y="6" width="2" height="1" fill="#2b2320"/><rect x="14" y="6" width="4" height="1" fill="#1c1b19"/><rect x="18" y="6" width="2" height="1" fill="#2b2320"/><rect x="20" y="6" width="2" height="1" fill="#1c1b19"/><rect x="9" y="7" width="1" height="1" fill="#1c1b19"/><rect x="10" y="7" width="12" height="1" fill="#e6a67a"/><rect x="22" y="7" width="1" height="1" fill="#1c1b19"/><rect x="8" y="8" width="1" height="1" fill="#1c1b19"/><rect x="9" y="8" width="14" height="1" fill="#e6a67a"/><rect x="23" y="8" width="1" height="1" fill="#1c1b19"/><rect x="8" y="9" width="1" height="1" fill="#1c1b19"/><rect x="9" y="9" width="14" height="1" fill="#e6a67a"/><rect x="23" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="10" width="1" height="1" fill="#1c1b19"/><rect x="8" y="10" width="2" height="1" fill="#e6a67a"/><rect x="10" y="10" width="4" height="1" fill="#1c1b19"/><rect x="14" y="10" width="4" height="1" fill="#e6a67a"/><rect x="18" y="10" width="4" height="1" fill="#1c1b19"/><rect x="22" y="10" width="2" height="1" fill="#e6a67a"/><rect x="24" y="10" width="1" height="1" fill="#1c1b19"/><rect x="7" y="11" width="1" height="1" fill="#1c1b19"/><rect x="8" y="11" width="2" height="1" fill="#e6a67a"/><rect x="10" y="11" width="4" height="1" fill="#1c1b19"/><rect x="14" y="11" width="4" height="1" fill="#e6a67a"/><rect x="18" y="11" width="4" height="1" fill="#1c1b19"/><rect x="22" y="11" width="2" height="1" fill="#e6a67a"/><rect x="24" y="11" width="1" height="1" fill="#1c1b19"/><rect x="7" y="12" width="1" height="1" fill="#1c1b19"/><rect x="8" y="12" width="16" height="1" fill="#e6a67a"/><rect x="24" y="12" width="1" height="1" fill="#1c1b19"/><rect x="8" y="13" width="1" height="1" fill="#1c1b19"/><rect x="9" y="13" width="6" height="1" fill="#e6a67a"/><rect x="15" y="13" width="2" height="1" fill="#b04040"/><rect x="17" y="13" width="6" height="1" fill="#e6a67a"/><rect x="23" y="13" width="1" height="1" fill="#1c1b19"/><rect x="8" y="14" width="1" height="1" fill="#1c1b19"/><rect x="9" y="14" width="14" height="1" fill="#e6a67a"/><rect x="23" y="14" width="1" height="1" fill="#1c1b19"/><rect x="9" y="15" width="1" height="1" fill="#1c1b19"/><rect x="10" y="15" width="12" height="1" fill="#e6a67a"/><rect x="22" y="15" width="1" height="1" fill="#1c1b19"/><rect x="10" y="16" width="1" height="1" fill="#1c1b19"/><rect x="11" y="16" width="10" height="1" fill="#e6a67a"/><rect x="21" y="16" width="1" height="1" fill="#1c1b19"/><rect x="11" y="17" width="3" height="1" fill="#1c1b19"/><rect x="14" y="17" width="4" height="1" fill="#e6a67a"/><rect x="18" y="17" width="3" height="1" fill="#1c1b19"/><rect x="8" y="18" width="5" height="1" fill="#1c1b19"/><rect x="13" y="18" width="2" height="1" fill="#0e8fa9"/><rect x="17" y="18" width="2" height="1" fill="#0e8fa9"/><rect x="19" y="18" width="5" height="1" fill="#1c1b19"/><rect x="7" y="19" width="1" height="1" fill="#1c1b19"/><rect x="8" y="19" width="3" height="1" fill="#f85c8e"/><rect x="11" y="19" width="2" height="1" fill="#0e8fa9"/><rect x="19" y="19" width="3" height="1" fill="#0e8fa9"/><rect x="22" y="19" width="2" height="1" fill="#f85c8e"/><rect x="24" y="19" width="1" height="1" fill="#1c1b19"/><rect x="6" y="20" width="1" height="1" fill="#1c1b19"/><rect x="7" y="20" width="3" height="1" fill="#f85c8e"/><rect x="10" y="20" width="13" height="1" fill="#0e8fa9"/><rect x="23" y="20" width="2" height="1" fill="#f85c8e"/><rect x="25" y="20" width="1" height="1" fill="#1c1b19"/><rect x="5" y="21" width="1" height="1" fill="#1c1b19"/><rect x="6" y="21" width="4" height="1" fill="#f85c8e"/><rect x="10" y="21" width="14" height="1" fill="#0e8fa9"/><rect x="24" y="21" width="2" height="1" fill="#f85c8e"/><rect x="26" y="21" width="1" height="1" fill="#1c1b19"/><rect x="5" y="22" width="1" height="1" fill="#1c1b19"/><rect x="6" y="22" width="6" height="1" fill="#0e8fa9"/><rect x="12" y="22" width="8" height="1" fill="#ffffff"/><rect x="20" y="22" width="6" height="1" fill="#0e8fa9"/><rect x="26" y="22" width="1" height="1" fill="#1c1b19"/><rect x="5" y="23" width="1" height="1" fill="#1c1b19"/><rect x="6" y="23" width="4" height="1" fill="#0e8fa9"/><rect x="10" y="23" width="12" height="1" fill="#ffffff"/><rect x="22" y="23" width="4" height="1" fill="#0e8fa9"/><rect x="26" y="23" width="1" height="1" fill="#1c1b19"/><rect x="5" y="24" width="1" height="1" fill="#1c1b19"/><rect x="6" y="24" width="3" height="1" fill="#0e8fa9"/><rect x="9" y="24" width="3" height="1" fill="#ffffff"/><rect x="12" y="24" width="1" height="1" fill="#0e8fa9"/><rect x="13" y="24" width="5" height="1" fill="#ffffff"/><rect x="18" y="24" width="1" height="1" fill="#0e8fa9"/><rect x="19" y="24" width="4" height="1" fill="#ffffff"/><rect x="23" y="24" width="3" height="1" fill="#0e8fa9"/><rect x="26" y="24" width="1" height="1" fill="#1c1b19"/><rect x="5" y="25" width="1" height="1" fill="#1c1b19"/><rect x="6" y="25" width="4" height="1" fill="#0e8fa9"/><rect x="10" y="25" width="3" height="1" fill="#ffffff"/><rect x="13" y="25" width="1" height="1" fill="#0e8fa9"/><rect x="14" y="25" width="5" height="1" fill="#ffffff"/><rect x="19" y="25" width="1" height="1" fill="#0e8fa9"/><rect x="20" y="25" width="2" height="1" fill="#ffffff"/><rect x="22" y="25" width="4" height="1" fill="#0e8fa9"/><rect x="26" y="25" width="1" height="1" fill="#1c1b19"/><rect x="5" y="26" width="1" height="1" fill="#1c1b19"/><rect x="6" y="26" width="5" height="1" fill="#0e8fa9"/><rect x="11" y="26" width="10" height="1" fill="#ffffff"/><rect x="21" y="26" width="5" height="1" fill="#0e8fa9"/><rect x="26" y="26" width="1" height="1" fill="#1c1b19"/><rect x="5" y="27" width="1" height="1" fill="#1c1b19"/><rect x="6" y="27" width="20" height="1" fill="#0e8fa9"/><rect x="26" y="27" width="1" height="1" fill="#1c1b19"/><rect x="6" y="28" width="1" height="1" fill="#1c1b19"/><rect x="7" y="28" width="18" height="1" fill="#0e8fa9"/><rect x="25" y="28" width="1" height="1" fill="#1c1b19"/><rect x="7" y="29" width="1" height="1" fill="#1c1b19"/><rect x="8" y="29" width="16" height="1" fill="#0e8fa9"/><rect x="24" y="29" width="1" height="1" fill="#1c1b19"/><rect x="8" y="30" width="16" height="1" fill="#1c1b19"/></svg>
     </div>
@@ -989,7 +901,7 @@
 </div>
 
 <!-- Game Paused Modal -->
-<div id="modal-pause" class="overlay-screen hidden" style="z-index: 55; background-color: rgba(28, 27, 25, 0.76);">
+<div id="modal-pause" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-labelledby="pause-modal-title" style="z-index: 55; background-color: rgba(28, 27, 25, 0.76);">
   <div class="dialog-card" style="max-width: 440px;">
     <div style="font-family: 'Press Start 2P', monospace; font-size: 20px; color: var(--accent-yellow); margin-bottom: 8px;">⏸</div>
     <h2 id="pause-modal-title" style="font-family: 'Press Start 2P', monospace; font-size: clamp(16px, 2.6vw, 22px); color: var(--accent-blue); margin-bottom: 8px; line-height: 1.2;">
@@ -1003,6 +915,7 @@
       <button id="btn-resume" class="btn-primary" style="width: 100%; font-size: 13px; padding: 13px;">
         <span id="btn-resume-text">RESUME GAME [P]</span>
       </button>
+      <button id="btn-help-pause" style="width: 100%; font-size: 11px; padding: 11px; background: #fffefb;">HOW TO PLAY</button>
       <button id="btn-restart-pause" style="width: 100%; font-size: 11px; padding: 11px; background: #fffefb;">
         <span id="btn-restart-pause-text">RESTART ROUND [R]</span>
       </button>
@@ -1014,7 +927,7 @@
 </div>
 
 <!-- Confirm Quit to Main Menu Pop-Up -->
-<div id="modal-confirm-menu" class="overlay-screen hidden" style="z-index: 60; background-color: rgba(28, 27, 25, 0.85);">
+<div id="modal-confirm-menu" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-quit-title" aria-describedby="confirm-quit-msg" style="z-index: 60; background-color: rgba(28, 27, 25, 0.85);">
   <div class="dialog-card" style="max-width: 420px; border-color: var(--accent-red);">
     <div style="font-family: 'Press Start 2P', monospace; font-size: 26px; color: var(--accent-red); margin-bottom: 10px;">⚠</div>
     <h2 id="confirm-quit-title" style="font-family: 'Press Start 2P', monospace; font-size: clamp(14px, 2.2vw, 18px); color: var(--accent-red); margin-bottom: 12px; line-height: 1.3;">
@@ -1035,69 +948,73 @@
 </div>
 
 <!-- Nanay's Judgment / Results Screen -->
-<div id="screen-results" class="overlay-screen hidden">
-  <div class="title-animated-bg" aria-hidden="true">
-    <div class="pixel-cloud c1"></div>
-    <div class="pixel-cloud c2"></div>
-    <div class="pixel-cloud c3"></div>
-    <div class="pixel-cloud c4"></div>
-    <div class="breeze-streak b1"></div>
-    <div class="breeze-streak b2"></div>
-    <div class="breeze-streak b3"></div>
-  </div>
+<div id="screen-results" class="overlay-screen hidden" aria-labelledby="results-header-text">
+  <div class="results-scenery" aria-hidden="true"></div>
   <div class="results-hero-layout">
-    <div class="results-hero-top">
-      <h2 class="judgment-header" id="results-header-text">MOM'S JUDGMENT</h2>
-      <div class="results-badge-row">
+    <div class="report-clothesline" aria-hidden="true"></div>
+    <img class="report-batya" src="assets/results/batya.png" alt="" width="148" height="116" aria-hidden="true">
+    <article class="laundry-report">
+      <div class="report-pin pin-left" aria-hidden="true"></div>
+      <div class="report-pin pin-right" aria-hidden="true"></div>
+      <header class="report-heading">
+        <h2 class="judgment-header" id="results-header-text">MOM'S JUDGMENT</h2>
         <div id="new-record-tag" class="new-record-badge hidden">★ NEW HIGH SCORE! ★</div>
+      </header>
+      <div class="report-verdict">
+        <div class="nanay-portrait" aria-hidden="true">
+          <img id="result-nanay" src="assets/results/nanay-happy.svg" alt="" width="128" height="128">
+        </div>
+        <div id="result-commentary" class="judgment-commentary"></div>
         <div id="result-grade" class="grade-stamp grade-s">GRADE S</div>
       </div>
-      <div id="result-commentary" class="judgment-commentary">
-        "PERFECT! Every single piece is saved dry! You're an amazing helper—come inside, let's have some hot merienda!"
-      </div>
-    </div>
-
-    <div class="results-hero-bottom">
       <div class="stats-grid">
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v4h4v2h2v2h-4v4H9v2H7v-4H3V9H1V7h4V3h2z"/></svg>
           <div class="stat-label" id="label-stat-total">TOTAL SCORE</div>
           <div id="result-score" class="stat-value highlight">0</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M5 2h2v2h2V2h2l4 3-2 3-2-1v7H5V7L3 8 1 5z"/></svg>
           <div class="stat-label" id="label-stat-dry">SAVED DRY</div>
           <div id="result-dry" class="stat-value">0 / 19</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v2h2v3h2v6h-2v2H5v-2H3V6h2V3h2z"/></svg>
           <div class="stat-label" id="label-stat-wet">SOAKED WET</div>
           <div id="result-wet" class="stat-value">0</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 4h9V2h3v2h2v3h-2v2H5V7h8V6H1zm0 7h9v-1h3v2h-3v2H7v-1H1z"/></svg>
           <div class="stat-label" id="label-stat-lost">BLOWN AWAY</div>
           <div id="result-lost" class="stat-value">0</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h5L9 6h5L5 15l2-6H2z"/></svg>
           <div class="stat-label" id="label-stat-combo">MAX COMBO</div>
           <div id="result-combo" class="stat-value highlight">1x</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M7 1h2v2h2v2h2v2H9v5H7V7H3V5h2V3h2zM2 13h12v2H2z"/></svg>
           <div class="stat-label" id="label-stat-rescues">AIR RESCUES</div>
           <div id="result-rescues" class="stat-value">0</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 5h14v2H1zm1 3h12v5h-2v2H4v-2H2zm3 1v3h2V9zm4 0v3h2V9zM5 1h2v2h2V1h2v3H5z"/></svg>
           <div class="stat-label" id="label-stat-swish">SWISH! TOSSES</div>
           <div id="result-swish" class="stat-value highlight">0</div>
         </div>
         <div class="stat-box">
+          <svg class="tally-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M1 2h10v2H3v9h9V8h2v7H1zm5 5 2 2 5-6 2 2-7 8-4-4z"/></svg>
           <div class="stat-label" id="label-stat-utos">UTOS DONE</div>
           <div id="result-utos" class="stat-value highlight">0</div>
         </div>
       </div>
 
+    </article>
       <div class="title-actions">
         <button id="btn-play-again" class="btn-primary"><span id="btn-play-again-text">PLAY AGAIN</span></button>
         <button id="btn-back-title"><span id="btn-back-title-text">BACK TO TITLE</span></button>
       </div>
-    </div>
   </div>
 </div>
 
@@ -1163,6 +1080,14 @@
       tipBreezy: "Wind gusts are snapping clothespins! Catch flying clothes mid-air! ([P] Pause • [R] Restart)",
       tipStorm: "It's pouring! Rush to save remaining clothes before they get soaked! ([P] Pause • [R] Restart)",
       tipFreeze: "Golden Clothespin active! Storm timer frozen for 4 seconds!",
+
+      touchCalm: "Drag clothes into the blue tub. Tap cats to shoo.",
+      touchBreezy: "Catch flying clothes and drag them into the tub. Tap cats to shoo.",
+      touchStorm: "Drag the remaining clothes into the tub before they get soaked!",
+      portraitTip: "For a larger view, turn your phone sideways.",
+      helpBack: "BACK",
+      backPause: "BACK TO PAUSE",
+      helpResume: "RESUME GAME",
 
       // Rules
       momQuote: "Son! The sky's turning dark and it's starting to drizzle! Put down that phone and help me bring in the laundry!",
@@ -1237,6 +1162,14 @@
       tipBreezy: "May bugso ng hangin! Saluhin ang mga damit na lilipad! ([P] Pause • [R] Ulitin)",
       tipStorm: "Uulan na! Bilisan ang pagliligpit bago mabasa ang sinampay! ([P] Pause • [R] Ulitin)",
       tipFreeze: "Bisa ng Gintong Sipit! Tumigil ang unos ng 4 na segundo!",
+
+      touchCalm: "I-drag ang damit sa asul na batya. I-tap ang pusa para itaboy.",
+      touchBreezy: "Saluhin ang lumilipad na damit at i-drag sa batya. I-tap ang pusa para itaboy.",
+      touchStorm: "I-drag agad ang natitirang damit sa batya bago mabasa!",
+      portraitTip: "Ihiga ang telepono para mas malaki ang tanawin.",
+      helpBack: "BUMALIK",
+      backPause: "BALIK SA PAUSE",
+      helpResume: "ITULOY ANG LARO",
 
       // Rules
       momQuote: "Nak! Dumidilim na ang langit at umaambon na oh! Bitawan mo muna 'yang selpon mo at tulungan mo akong magligpit ng sinampay!",
@@ -1397,6 +1330,51 @@
   const btnLangTitle = document.getElementById('btn-lang-title');
   const btnLangHud = document.getElementById('btn-lang-hud');
 
+  const btnHelpPause = document.getElementById('btn-help-pause');
+  const btnDismissRules = document.getElementById('btn-dismiss-rules');
+  const rulesHeading = document.getElementById('rules-heading');
+  const portraitGuidance = document.getElementById('portrait-guidance');
+  let rulesFromPause = false;
+  const modalScreens = [modalConfirmMenu, modalPause, modalRules];
+  const interactionSurfaces = [document.getElementById('stage'), hud,
+    screenTitle, screenResults, ...modalScreens];
+  function activeModal() {
+    return modalScreens.find(screen => !screen.classList.contains('hidden'));
+  }
+  function updateInteraction(preferredFocus, moveFocus = true) {
+    const active = activeModal() || [screenResults, screenTitle]
+      .find(screen => !screen.classList.contains('hidden'));
+    for (const surface of interactionSurfaces) {
+      surface.inert = active ? surface !== active : surface.classList.contains('hidden');
+    }
+    if (moveFocus) {
+      const target = preferredFocus || (active && active.querySelector('button')) || canvas;
+      target.focus({ preventScroll: true });
+    }
+  }
+  document.addEventListener('keydown', event => {
+    const modal = activeModal();
+    if (modal === modalRules && event.key !== 'Tab') {
+      // Help owns keyboard input; R/P must not restart or resume behind it.
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeRules(false);
+      }
+      return;
+    }
+    if (!modal || event.key !== 'Tab') return;
+    const buttons = [...modal.querySelectorAll('button:not(:disabled)')];
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    if (!modal.contains(document.activeElement) ||
+        (event.shiftKey && document.activeElement === first) ||
+        (!event.shiftKey && document.activeElement === last)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  });
+
   function getUtosDisplayName(kind, lang) {
     const names = {
       floral_blanket: { tl: 'KUMOT', en: 'BLANKET' },
@@ -1441,6 +1419,7 @@
     labelHudCount.textContent = dict.savedLabel;
 
     rulesMomQuote.innerHTML = dict.momQuote;
+    modalRules.setAttribute('aria-label', dict.rules);
     ruleItem1.innerHTML = dict.rule1;
     ruleItem2.innerHTML = dict.rule2;
     ruleItem3.innerHTML = dict.rule3;
@@ -1448,8 +1427,10 @@
     ruleItem5.innerHTML = dict.rule5;
     if (ruleItem6) ruleItem6.innerHTML = dict.rule6;
     if (ruleItem7) ruleItem7.innerHTML = dict.rule7;
-    btnCloseRulesText.textContent = dict.startNow;
-    btnBackRulesText.textContent = dict.backTitle;
+    updateRulesLabels();
+    btnHelpPause.textContent = dict.rules;
+    rulesHeading.textContent = dict.rules;
+    portraitGuidance.textContent = dict.portraitTip;
 
     resultsHeaderText.textContent = dict.momJudgment;
     newRecordTag.textContent = dict.newRecord;
@@ -1492,7 +1473,7 @@
     if (lastGameOverRes) {
       if (lastGameOverRes.tsinelasRage && lastGameOverRes.grade !== 'S') {
         resultCommentary.textContent = dict.gradeRage;
-        resultGrade.textContent = lang === 'tl' ? '🩴 GALIT NI NANAY' : '🩴 SLIPPER RAGE';
+        resultGrade.textContent = lang === 'tl' ? 'GALIT NI NANAY' : 'SLIPPER RAGE';
       } else {
         resultCommentary.textContent = dict['grade' + lastGameOverRes.grade];
       }
@@ -1526,7 +1507,13 @@
       hudWeatherIcon.innerHTML = SVG_RAIN;
       hudStatus.textContent = dict.tipStorm;
     }
+    if (matchMedia('(max-width: 600px), (pointer: coarse)').matches && urgency !== 'freeze') {
+      hudStatus.textContent = urgency === 'calm' ? dict.touchCalm : urgency === 'breezy' ? dict.touchBreezy : dict.touchStorm;
+    }
   }
+
+  const touchHintMedia = matchMedia('(max-width: 600px), (pointer: coarse)');
+  touchHintMedia.addEventListener('change', () => updateWeatherUI(currentWeatherUrgency));
 
   // Update Mute UI
   function updateSoundUI(isMuted) {
@@ -1645,6 +1632,7 @@
         modalConfirmMenu.classList.add('hidden');
         hud.classList.add('hidden');
       }
+      updateInteraction(phase === 'title' ? btnPlay : canvas);
     },
     onPauseChange(isPaused) {
       if (isPaused) {
@@ -1654,6 +1642,7 @@
         modalPause.classList.add('hidden');
         modalConfirmMenu.classList.add('hidden');
       }
+      updateInteraction(isPaused ? btnResume : canvas);
     },
     onQuitConfirmChange(isConfirming) {
       if (isConfirming) {
@@ -1661,18 +1650,25 @@
       } else {
         modalConfirmMenu.classList.add('hidden');
       }
+      updateInteraction(isConfirming ? btnCancelQuit :
+        (!modalPause.classList.contains('hidden') ? btnMenuPause : undefined));
     },
     onGameOver(res) {
       lastGameOverRes = res;
+      document.getElementById('result-nanay').src =
+        res.grade === 'S' || res.grade === 'A'
+          ? 'assets/results/nanay-happy.svg'
+          : 'assets/results/nanay-disappointed.svg';
+      screenResults.dataset.grade = res.grade;
       const dict = I18N[currentLang];
       if (res.tsinelasRage && res.grade !== 'S') {
         resultGrade.className = 'grade-stamp grade-f rage-stamp';
-        resultGrade.textContent = currentLang === 'tl' ? '🩴 GALIT NI NANAY' : '🩴 SLIPPER RAGE';
+        resultGrade.textContent = currentLang === 'tl' ? 'GALIT NI NANAY' : 'SLIPPER RAGE';
         resultCommentary.textContent = dict.gradeRage || res.commentary;
       } else {
         resultGrade.className = `grade-stamp ${res.badgeClass}`;
         resultGrade.textContent = `GRADE ${res.grade}`;
-        resultCommentary.textContent = res.commentary || dict['grade' + res.grade];
+        resultCommentary.textContent = dict['grade' + res.grade] || res.commentary;
       }
       resultScore.textContent = res.score % 1 ? res.score.toFixed(1) : res.score;
       resultDry.textContent = `${res.dry} / ${res.total}`;
@@ -1693,6 +1689,8 @@
       }
 
       screenResults.classList.remove('hidden');
+      screenResults.scrollTop = 0;
+      updateInteraction(btnPlayAgain);
     },
   });
   window.game = game;
@@ -1703,6 +1701,7 @@
   applyLanguage(currentLang);
   hudBest.textContent = game.best;
   titleBest.textContent = game.best;
+  updateInteraction(undefined, false);
 
   if (hudTsinelasCanvas && renderer && typeof renderer.drawTsinelasIcon === 'function') {
     const tCtx = hudTsinelasCanvas.getContext('2d');
@@ -1743,24 +1742,46 @@
     game.resetToTitle();
   });
 
+  function updateRulesLabels() {
+    const dict = I18N[currentLang];
+    btnCloseRulesText.textContent = rulesFromPause ? dict.helpResume : dict.startNow;
+    btnBackRulesText.textContent = rulesFromPause ? dict.backPause : dict.backTitle;
+    btnDismissRules.textContent = dict.helpBack;
+    btnDismissRules.setAttribute('aria-label', rulesFromPause ? dict.backPause : dict.backTitle);
+  }
+  function openRules(fromPause) {
+    rulesFromPause = fromPause;
+    audio.ensureContext();
+    if (fromPause) modalPause.classList.add('hidden');
+    modalRules.classList.remove('hidden');
+    updateRulesLabels();
+    const rulesCard = document.getElementById('rules-dialog-card');
+    rulesCard.scrollTop = 0;
+    updateInteraction(rulesCard);
+  }
+  function closeRules(continueGame) {
+    if (modalRules.classList.contains('hidden')) return;
+    modalRules.classList.add('hidden');
+    if (rulesFromPause && game.phase === 'play') {
+      if (continueGame) game.resume();
+      else {
+        modalPause.classList.remove('hidden');
+        updateInteraction(btnHelpPause);
+      }
+    } else if (continueGame) game.start();
+    else updateInteraction(btnRules);
+  }
   btnRules.addEventListener('click', () => {
     if (game.phase !== 'title' || screenTitle.classList.contains('hidden')) return;
-    btnRules.blur();
-    audio.ensureContext();
-    modalRules.classList.remove('hidden');
+    openRules(false);
   });
-  btnCloseRules.addEventListener('click', () => {
-    if (modalRules.classList.contains('hidden')) return;
-    btnCloseRules.blur();
-    modalRules.classList.add('hidden');
-    game.start();
+  btnHelpPause.addEventListener('click', () => {
+    if (game.phase !== 'play' || !game.paused || game.confirmingQuit) return;
+    openRules(true);
   });
-  btnBackRules.addEventListener('click', () => {
-    if (modalRules.classList.contains('hidden')) return;
-    btnBackRules.blur();
-    modalRules.classList.add('hidden');
-    screenTitle.classList.remove('hidden');
-  });
+  btnDismissRules.addEventListener('click', () => closeRules(false));
+  btnCloseRules.addEventListener('click', () => closeRules(true));
+  btnBackRules.addEventListener('click', () => closeRules(false));
 
   btnSoundTitle.addEventListener('click', () => {
     if (screenTitle.classList.contains('hidden')) return;

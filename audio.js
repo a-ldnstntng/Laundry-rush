@@ -18,6 +18,8 @@ class SampayanAudio {
     this.rainGain = null;
     this.rainSource = null;
     this.noiseBuffer = null;
+    this.lastMeowAt = -Infinity;
+    this.lastFabricAt = -Infinity;
 
     // Load persistent mute state
     this.muted = this.loadMuteState();
@@ -621,8 +623,11 @@ class SampayanAudio {
       case 'swish': // Rewarding basketball chime on long-distance batya score
         this.sfxSwish();
         break;
-      case 'meow': // 8-bit cat meow for Munin the Puspin
-        this.sfxMeow();
+      case 'fabric': // Soft cloth movement, mixed below action cues
+        this.sfxFabric(extra);
+        break;
+      case 'meow': // Distinct voices for the rooftop cats
+        this.sfxMeow(extra);
         break;
       case 'catHiss': // Startled screech when Munin is shooed away ("Tsupe!")
         this.sfxCatHiss();
@@ -995,25 +1000,70 @@ class SampayanAudio {
     }
   }
 
-  sfxMeow() {
+  sfxFabric(strength = 1) {
+    if (!this.noiseBuffer) return;
     const now = this.ac.currentTime;
-    const osc = this.ac.createOscillator();
+    if (now - this.lastFabricAt < 0.18) return;
+    this.lastFabricAt = now;
+    const src = this.ac.createBufferSource();
+    src.buffer = this.noiseBuffer;
+    src.playbackRate.value = 0.85 + Math.random() * 0.3;
+    const highpass = this.ac.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.setValueAtTime(450, now);
+    const lowpass = this.ac.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(1700, now);
+    lowpass.frequency.linearRampToValueAtTime(2900, now + 0.09);
+    lowpass.frequency.exponentialRampToValueAtTime(850, now + 0.38);
     const gain = this.ac.createGain();
-
-    osc.type = 'triangle';
-    // Authentic retro cat meow pitch-bend curve (480Hz -> 860Hz -> 520Hz)
-    osc.frequency.setValueAtTime(480, now);
-    osc.frequency.exponentialRampToValueAtTime(860, now + 0.12);
-    osc.frequency.exponentialRampToValueAtTime(520, now + 0.32);
-
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.24, now + 0.06);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
-
-    osc.connect(gain);
+    const volume = 0.10 * Math.max(0, Math.min(1, strength));
+    // Two soft folds, with a gentle attack rather than a noise click.
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(volume, now + 0.045);
+    gain.gain.linearRampToValueAtTime(volume * 0.3, now + 0.14);
+    gain.gain.linearRampToValueAtTime(volume * 0.65, now + 0.21);
+    gain.gain.linearRampToValueAtTime(0, now + 0.4);
+    src.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(gain);
     gain.connect(this.sfxGain);
+    src.start(now, Math.random() * 0.8);
+    src.stop(now + 0.42);
+    src.onended = () => {
+      src.disconnect(); highpass.disconnect(); lowpass.disconnect(); gain.disconnect();
+    };
+  }
+
+  sfxMeow(catType = 'munin') {
+    const now = this.ac.currentTime;
+    if (now - this.lastMeowAt < 0.65) return;
+    this.lastMeowAt = now;
+    const pitch = ({ munin: 440, siopao: 340, kitkit: 590 }[catType] || 440) * (0.96 + Math.random() * 0.08);
+    const filter = this.ac.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.Q.setValueAtTime(2.2, now);
+    filter.frequency.setValueAtTime(850, now);
+    filter.frequency.exponentialRampToValueAtTime(1900, now + 0.12);
+    filter.frequency.exponentialRampToValueAtTime(620, now + 0.48);
+    const gain = this.ac.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.055);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.23);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    gain.gain.linearRampToValueAtTime(0, now + 0.53);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+    const osc = this.ac.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(pitch * 0.85, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.25, now + 0.11);
+    osc.frequency.exponentialRampToValueAtTime(pitch, now + 0.22);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.62, now + 0.52);
+    osc.connect(filter);
     osc.start(now);
-    osc.stop(now + 0.36);
+    osc.stop(now + 0.55);
+    osc.onended = () => { osc.disconnect(); filter.disconnect(); gain.disconnect(); };
   }
 
   sfxCatHiss() {

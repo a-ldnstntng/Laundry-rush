@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T12:55:35.008877+00:00",
+  "title": "Design System: Sampayan Rush",
+  "extensions": {
+    "colorMeta": {
+      "report-paper": {
+        "role": "neutral",
+        "displayName": "Report Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0424 89.36)",
+          "oklch(26% 0.0424 89.36)",
+          "oklch(38% 0.0424 89.36)",
+          "oklch(49% 0.0424 89.36)",
+          "oklch(61% 0.0424 89.36)",
+          "oklch(72% 0.0424 89.36)",
+          "oklch(84% 0.0424 89.36)",
+          "oklch(95% 0.0424 89.36)"
+        ]
+      },
+      "report-rule": {
+        "role": "neutral",
+        "displayName": "Report Rule",
+        "tonalRamp": [
+          "oklch(15% 0.0296 122.06)",
+          "oklch(26% 0.0296 122.06)",
+          "oklch(38% 0.0296 122.06)",
+          "oklch(49% 0.0296 122.06)",
+          "oklch(61% 0.0296 122.06)",
+          "oklch(72% 0.0296 122.06)",
+          "oklch(84% 0.0296 122.06)",
+          "oklch(95% 0.0296 122.06)"
+        ]
+      },
+      "report-blue": {
+        "role": "primary",
+        "displayName": "Report Blue",
+        "tonalRamp": [
+          "oklch(15% 0.1059 257.66)",
+          "oklch(26% 0.1059 257.66)",
+          "oklch(38% 0.1059 257.66)",
+          "oklch(49% 0.1059 257.66)",
+          "oklch(61% 0.1059 257.66)",
+          "oklch(72% 0.1059 257.66)",
+          "oklch(84% 0.1059 257.66)",
+          "oklch(95% 0.1059 257.66)"
+        ]
+      },
+      "report-body": {
+        "role": "neutral",
+        "displayName": "Report Body",
+        "tonalRamp": [
+          "oklch(15% 0.0356 231.91)",
+          "oklch(26% 0.0356 231.91)",
+          "oklch(38% 0.0356 231.91)",
+          "oklch(49% 0.0356 231.91)",
+          "oklch(61% 0.0356 231.91)",
+          "oklch(72% 0.0356 231.91)",
+          "oklch(84% 0.0356 231.91)",
+          "oklch(95% 0.0356 231.91)"
+        ]
+      },
+      "report-label": {
+        "role": "neutral",
+        "displayName": "Report Label",
+        "tonalRamp": [
+          "oklch(15% 0.0255 219.06)",
+          "oklch(26% 0.0255 219.06)",
+          "oklch(38% 0.0255 219.06)",
+          "oklch(49% 0.0255 219.06)",
+          "oklch(61% 0.0255 219.06)",
+          "oklch(72% 0.0255 219.06)",
+          "oklch(84% 0.0255 219.06)",
+          "oklch(95% 0.0255 219.06)"
+        ]
+      },
+      "score-paper": {
+        "role": "neutral",
+        "displayName": "Score Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0580 88.60)",
+          "oklch(26% 0.0580 88.60)",
+          "oklch(38% 0.0580 88.60)",
+          "oklch(49% 0.0580 88.60)",
+          "oklch(61% 0.0580 88.60)",
+          "oklch(72% 0.0580 88.60)",
+          "oklch(84% 0.0580 88.60)",
+          "oklch(95% 0.0580 88.60)"
+        ]
+      },
+      "replay-yellow": {
+        "role": "primary",
+        "displayName": "Replay Yellow",
+        "tonalRamp": [
+          "oklch(15% 0.1650 86.32)",
+          "oklch(26% 0.1650 86.32)",
+          "oklch(38% 0.1650 86.32)",
+          "oklch(49% 0.1650 86.32)",
+          "oklch(61% 0.1650 86.32)",
+          "oklch(72% 0.1650 86.32)",
+          "oklch(84% 0.1650 86.32)",
+          "oklch(95% 0.1650 86.32)"
+        ]
+      },
+      "replay-hover": {
+        "role": "primary",
+        "displayName": "Replay Hover",
+        "tonalRamp": [
+          "oklch(15% 0.1502 89.28)",
+          "oklch(26% 0.1502 89.28)",
+          "oklch(38% 0.1502 89.28)",
+          "oklch(49% 0.1502 89.28)",
+          "oklch(61% 0.1502 89.28)",
+          "oklch(72% 0.1502 89.28)",
+          "oklch(84% 0.1502 89.28)",
+          "oklch(95% 0.1502 89.28)"
+        ]
+      },
+      "title-paper": {
+        "role": "neutral",
+        "displayName": "Title Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0253 109.34)",
+          "oklch(26% 0.0253 109.34)",
+          "oklch(38% 0.0253 109.34)",
+          "oklch(49% 0.0253 109.34)",
+          "oklch(61% 0.0253 109.34)",
+          "oklch(72% 0.0253 109.34)",
+          "oklch(84% 0.0253 109.34)",
+          "oklch(95% 0.0253 109.34)"
+        ]
+      },
+      "action-ink": {
+        "role": "neutral",
+        "displayName": "Action Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0227 238.04)",
+          "oklch(26% 0.0227 238.04)",
+          "oklch(38% 0.0227 238.04)",
+          "oklch(49% 0.0227 238.04)",
+          "oklch(61% 0.0227 238.04)",
+          "oklch(72% 0.0227 238.04)",
+          "oklch(84% 0.0227 238.04)",
+          "oklch(95% 0.0227 238.04)"
+        ]
+      },
+      "loss-red": {
+        "role": "secondary",
+        "displayName": "Loss Red",
+        "tonalRamp": [
+          "oklch(15% 0.1526 21.65)",
+          "oklch(26% 0.1526 21.65)",
+          "oklch(38% 0.1526 21.65)",
+          "oklch(49% 0.1526 21.65)",
+          "oklch(61% 0.1526 21.65)",
+          "oklch(72% 0.1526 21.65)",
+          "oklch(84% 0.1526 21.65)",
+          "oklch(95% 0.1526 21.65)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "report-block",
+        "value": "8px 8px 0 #0d2028, inset 0 0 0 6px #e5d5ad",
+        "purpose": "Report sheet depth and inset trim."
+      },
+      {
+        "name": "action-block",
+        "value": "5px 5px #0d2028",
+        "purpose": "Results actions at rest."
+      },
+      {
+        "name": "action-pressed",
+        "value": "2px 2px #0d2028",
+        "purpose": "Depressed action state."
+      }
+    ],
+    "motion": [
+      {
+        "name": "button-state",
+        "value": "transform 0.05s steps(2, start), box-shadow 0.05s steps(2, start)",
+        "purpose": "Inherited arcade button state transition."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "results-compact",
+        "value": "(max-width: 900px)"
+      },
+      {
+        "name": "results-phone",
+        "value": "(max-width: 600px)"
+      },
+      {
+        "name": "results-short-landscape",
+        "value": "(max-height: 550px) and (min-width: 601px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Replay",
+      "kind": "button",
+      "refersTo": "button-replay",
+      "description": "Results action placed outside the report.",
+      "html": "<button class=\"ds-button-replay\">PLAY AGAIN</button>",
+      "css": ".ds-button-replay{font:13px/1.6 'Press Start 2P',monospace;letter-spacing:0;border:3px solid #17232b;border-radius:0;box-shadow:5px 5px #0d2028;padding:16px 12px;min-height:64px;cursor:pointer;transition:transform .05s steps(2,start),box-shadow .05s steps(2,start);background:#f5bd19;color:#17232b;} .ds-button-replay:hover{background:#ffd252;transform:translate(-2px,-2px);} .ds-button-replay:focus-visible{outline:3px solid #fff3d4;outline-offset:4px;} .ds-button-replay:active{transform:translate(3px,3px);box-shadow:2px 2px #0d2028;}"
+    },
+    {
+      "name": "Return to title",
+      "kind": "button",
+      "refersTo": "button-title",
+      "description": "Results action placed outside the report.",
+      "html": "<button class=\"ds-button-title\">BACK TO TITLE</button>",
+      "css": ".ds-button-title{font:13px/1.6 'Press Start 2P',monospace;letter-spacing:0;border:3px solid #17232b;border-radius:0;box-shadow:5px 5px #0d2028;padding:16px 12px;min-height:64px;cursor:pointer;transition:transform .05s steps(2,start),box-shadow .05s steps(2,start);background:#e5e6d3;color:#263d49;} .ds-button-title:hover{background:#fff3d4;transform:translate(-2px,-2px);} .ds-button-title:focus-visible{outline:3px solid #fff3d4;outline-offset:4px;} .ds-button-title:active{transform:translate(3px,3px);box-shadow:2px 2px #0d2028;}"
+    },
+    {
+      "name": "Report sheet",
+      "kind": "card",
+      "refersTo": "report",
+      "description": "Cream ruled results surface with pixel block depth.",
+      "html": "<article class=\"ds-report\"><h2> MOMS JUDGMENT</h2><p>Great job, son!</p></article>",
+      "css": ".ds-report{background:#fff3d4;color:#163e76;border:4px solid #242d2c;padding:28px 36px 24px;box-shadow:8px 8px 0 #0d2028,inset 0 0 0 6px #e5d5ad;} .ds-report h2{font:24px/1.5 'Press Start 2P',monospace;border-bottom:3px solid #163e76;padding-bottom:20px;} .ds-report p{font:25px/1.2 'VT323',monospace;color:#263d49;}"
+    },
+    {
+      "name": "Grade stamp",
+      "kind": "custom",
+      "description": "Crooked dashed stamp; sample is grade A.",
+      "html": "<div class=\"ds-grade\">GRADE A</div>",
+      "css": ".ds-grade{display:inline-block;padding:18px 8px;border:4px dashed currentColor;font:23px/1.6 'Press Start 2P',monospace;text-align:center;transform:rotate(-7deg);box-shadow:3px 3px #ddcba3;background:#d7e6be;color:#276046;}"
+    },
+    {
+      "name": "Supporting tally",
+      "kind": "custom",
+      "description": "Small blue supporting statistic with crisp SVG symbol.",
+      "html": "<div class=\"ds-tally\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\" shape-rendering=\"crispEdges\"><path fill=\"currentColor\" d=\"M7 1h5L9 6h5L5 15l2-6H2z\"/></svg><div class=\"ds-label\">MAX COMBO</div><div class=\"ds-value\">5x</div></div>",
+      "css": ".ds-tally{padding:20px 12px 16px;background:#fff3d4;color:#163e76;} .ds-tally svg{display:block;width:18px;height:18px;margin-bottom:8px;} .ds-label{font:8px/1.5 'Press Start 2P',monospace;color:#41545a;min-height:24px;margin-bottom:8px;} .ds-value{font:19px/1.3 'Press Start 2P',monospace;font-variant-numeric:tabular-nums;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Nanay’s Laundry Report",
+    "overview": "The existing world is a Filipino rooftop pixel arcade: expressive original character art, pixel type, square outlines and tactile block shadows. This document records the shipped end-of-run surface, rather than prescribing new compositions for gameplay or other screens.\n\nThe results surface turns Nanay’s judgment into a cream sheet clipped to a clothesline. A dim pre-rendered rooftop covers the finished game completely. The portrait, commentary and crooked grade stamp introduce the verdict; score and dry laundry dominate the tally. English and Tagalog share this structure.",
+    "keyCharacteristics": [
+      "Original pixel portraits and rooftop artwork.",
+      "Cream paper with blue ink and ruled statistics.",
+      "Dominant score pair, six supporting tallies.",
+      "Yellow replay and pale title actions outside the sheet."
+    ],
+    "rules": [
+      {
+        "name": "Outcome Ink",
+        "body": "Keep loss tallies red while the remaining statistics use blue; grade color communicates its separate verdict state.",
+        "section": "colors"
+      },
+      {
+        "name": "Readable Tally",
+        "body": "Preserve 8px Press Start 2P secondary labels on desktop and landscape, and 18px VT323 secondary labels on phones; retain space for bilingual wrapping.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "**Do** preserve the approved Filipino rooftop pixel art, square outlines and block shadows.",
+      "**Do** keep the primary score pair larger than the six supporting tallies.",
+      "**Do** preserve bilingual wrapping and the responsive label treatments.",
+      "**Do** retain the clean, dim, full-cover rooftop behind the report."
+    ],
+    "donts": [
+      "**Don't** move replay or return-to-title actions inside the report sheet.",
+      "**Don't** let finished-game objects remain visible through the results backdrop.",
+      "**Don't** generalize this report composition into requirements for unrelated gameplay screens."
+    ]
+  }
+}

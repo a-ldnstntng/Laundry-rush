@@ -588,120 +588,96 @@ class SampayanRenderer {
     const proj = this.project(cat.x, cat.y, cat.z);
     if (proj.d < -1e8) return;
 
-    const pxScale = 2; // Crisp 2x integer pixel blocks
-    const facing = cat.facing || 1; // 1 = right, -1 = left
-
-    const CAT_PALS_U32 = {
-      munin: {
-        '#': this.rgb(24, 18, 16),
-        'o': this.rgb(234, 88, 12),
-        'O': this.rgb(154, 52, 18),
-        'w': this.rgb(255, 251, 235),
-        'p': this.rgb(251, 113, 133),
-        'e': this.rgb(22, 163, 74),
-        'y': this.rgb(254, 240, 138),
-      },
-      siopao: {
-        '#': this.rgb(24, 18, 16),
-        'o': this.rgb(253, 224, 71),
-        'O': this.rgb(194, 65, 12),
-        'w': this.rgb(255, 255, 255),
-        'p': this.rgb(251, 113, 133),
-        'e': this.rgb(202, 138, 4),
-        'y': this.rgb(41, 37, 36),
-      },
-      kitkit: {
-        '#': this.rgb(15, 23, 42),
-        'o': this.rgb(51, 65, 85),
-        'O': this.rgb(30, 41, 59),
-        'w': this.rgb(248, 250, 252),
-        'p': this.rgb(244, 114, 182),
-        'e': this.rgb(6, 182, 212),
-        'y': this.rgb(224, 242, 254),
-      },
-    };
-
+    // Native-resolution fur clusters match the rooftop's fine pixel texture.
+    const pxScale = 1;
+    const facing = cat.facing || 1;
+    if (!this.catArt) {
+      const palettes = {
+        // Warm highlights and violet-brown shade echo the scene's color ramps.
+        munin: { '#': [63, 49, 54], o: [174, 113, 69], O: [118, 76, 59], h: [209, 157, 99], w: [222, 210, 178], p: [172, 112, 105], e: [180, 180, 111] },
+        siopao: { '#': [77, 65, 68], o: [204, 194, 169], O: [153, 141, 128], h: [232, 222, 193], w: [238, 229, 204], p: [184, 130, 121], e: [157, 151, 98] },
+        kitkit: { '#': [44, 44, 59], o: [89, 92, 108], O: [62, 63, 80], h: [126, 133, 145], w: [205, 206, 192], p: [154, 114, 120], e: [180, 171, 111] },
+      };
+      for (const palette of Object.values(palettes)) {
+        for (const key of Object.keys(palette)) palette[key] = this.rgb(...palette[key]);
+      }
+      // Facing right: a long back, small three-quarter head, hocks and hooked tail.
+      // Each pose keeps the paws on the same baseline for depth and hit testing.
+      const walk = [
+        '................................',
+        '................................',
+        '......................#....#....',
+        '.....................#h#..#o#...',
+        '.....................#hp##op#...',
+        '..##.................#hooooo#...',
+        '.#ho#...............#hhooOooo#...',
+        '.#o#...............#hhoOooOooo#..',
+        '.#o#.....###########hoo#eoo#eo#..',
+        '..#o#..##hhhhoohhhoohhooooowww#..',
+        '...#o##hhoOooOooOooOooowwwpww#..',
+        '....#ohhhoOooOooOooooooOowww#...',
+        '.....#hhooooooooooooooooOoo#....',
+        '.....#oooooooooooooooOoooO#.....',
+        '.....#oOoooooooooooOOOoooo#.....',
+        '......#oOOooooOOOOO#..#ooo#......',
+        '.......#ooO####oo#....#oo#.......',
+        '.......#oo#...#o#....#oo#........',
+        '......#ww#....#w#....#ww#........',
+        '......####....###....####........',
+      ];
+      const stride = walk.slice();
+      stride[16] = '......#oo#..#oo#......#oo#.......';
+      stride[17] = '.....#oo#....#oo#......#oo#......';
+      stride[18] = '.....#ww#.....#ww#.....#ww#......';
+      stride[19] = '.....####.....####.....####......';
+      const sit = [
+        '................................',
+        '................................',
+        '....................#....#......',
+        '...................#h#..#o#.....',
+        '...................#hp##op#.....',
+        '...................#hooooo#.....',
+        '..................#hhooOooo#....',
+        '..................#hoOooOooo#...',
+        '..................#ho#eoo#eo#...',
+        '...........####...#hooooowww#...',
+        '.........##hhho####ooowwpww#....',
+        '........#hhoOooOhhoooowww#.....',
+        '.......#hhoOooooooOoooooo#......',
+        '.......#hooooooooOooooooo#......',
+        '.......#ooOooooooOOoowwoo#......',
+        '.......#ooOoooooOO#oowwoo#......',
+        '...##..#oOOooooOO#.#owwo#.......',
+        '..#ho###oOOoooOO#..#owwo#.......',
+        '...#oooooOwwwwww#..#www#........',
+        '....#############..#####........',
+      ];
+      const swat = sit.slice();
+      swat[10] = '.........##hhho####ooowwpww#..##.';
+      swat[11] = '........#hhoOooOhhoooowww#.#ww#.';
+      swat[12] = '.......#hhoOooooooOoooooo##oww#.';
+      swat[13] = '.......#hooooooooOooooooohhooo#.';
+      swat[14] = '.......#ooOooooooOOoowwooo###...';
+      const flee = walk.slice();
+      flee[3] = '.....................##...##....';
+      flee[4] = '....................#hp###op#...';
+      flee[8] = '.#o#.....###########hoo#eoo#eo#..';
+      const fleeStride = stride.slice();
+      fleeStride[3] = flee[3];
+      fleeStride[4] = flee[4];
+      const nap = sit.slice();
+      nap[8] = '..................#ho##oo##o#...';
+      this.catArt = { palettes, frames: { walk_0: walk, walk_1: stride, sit, swat, flee, flee_1: fleeStride, nap } };
+    }
     const catType = cat.type || 'munin';
-    const CAT_PAL = CAT_PALS_U32[catType] || CAT_PALS_U32.munin;
-
-    const FRAMES = {
-      walk_0: [
-        ".....#...#......",
-        "....#p#.#p#.....",
-        "....#o#.#o#.....",
-        "...#ooooooo#....",
-        "..#oOoooOooo#...",
-        "..#oe#owoe#o#...",
-        "..#o#yww#y#o#...",
-        "..#oowppwoo##...",
-        "...#owwwww#o#...",
-        "....#oOoOo##o#..",
-        "....#w#.#w#..#..",
-        "....###.###....."
-      ],
-      walk_1: [
-        ".....#...#......",
-        "....#p#.#p#.....",
-        "....#o#.#o#.....",
-        "...#ooooooo#..#.",
-        "..#oOoooOooo#.#.",
-        "..#oe#owoe#o##..",
-        "..#o#yww#y#o#...",
-        "..#oowppwoo##...",
-        "...#owwwww#o#...",
-        "....#oOoOo##....",
-        ".....#w#.#w#....",
-        ".....###.###...."
-      ],
-      sit: [
-        ".....#...#......",
-        "....#p#.#p#.....",
-        "....#o#.#o#.....",
-        "...#ooooooo#....",
-        "..#oOoooOooo#...",
-        "..#oe#owoe#o#.#.",
-        "..#o#yww#y#o#.#.",
-        "..#oowppwoo###..",
-        "...#owwwww#o#...",
-        "..#oOooOoOo#....",
-        "..#ww#.#ww#.....",
-        "..####.####....."
-      ],
-      swat: [
-        "....##...#......",
-        "...#p#..#p#.....",
-        "...#o#..#o#.....",
-        "...#ooooooo##w#.",
-        "..#oOoooOooo#w#.",
-        "..#oe#owoe#o##..",
-        "..#o#yww#y#o#...",
-        "..#oowppwoo##...",
-        "...#owwwww#o#...",
-        "....#oOoOo##....",
-        "....#w#..#w#....",
-        "....###..###...."
-      ],
-      flee: [
-        "................",
-        "....##...##.....",
-        "...#po#.#op#....",
-        "..#ooooooooo#...",
-        ".#oOOoooOOooo#..",
-        ".#e#owwwwoe#o###",
-        ".#y#owppwo#y#..#",
-        "..#owwwwww#o#..#",
-        "...#oOoOoOo#..#.",
-        "..#oo#...#oo##..",
-        ".#ww#.....#ww#..",
-        ".###.......###.."
-      ]
-    };
+    const CAT_PAL = this.catArt.palettes[catType] || this.catArt.palettes.munin;
+    const FRAMES = this.catArt.frames;
 
     let frameKey = 'walk_0';
     if (cat.state === 'flee') {
-      frameKey = 'flee';
+      frameKey = Math.floor(time * 12) % 2 === 0 ? 'flee' : 'flee_1';
     } else if (cat.state === 'knead_nap') {
-      frameKey = Math.floor(time * 4) % 2 === 0 ? 'sit' : 'walk_0';
+      frameKey = 'nap';
     } else if (cat.state === 'tip_basket') {
       frameKey = Math.floor(time * 6) % 2 === 0 ? 'swat' : 'sit';
     } else if (cat.state === 'stalk_basket') {
@@ -715,8 +691,8 @@ class SampayanRenderer {
     }
 
     const rows = FRAMES[frameKey] || FRAMES.walk_0;
-    const spriteW = 16;
-    const spriteH = 12;
+    const spriteW = 32;
+    const spriteH = 20;
     const drawW = spriteW * pxScale;
     const drawH = spriteH * pxScale;
 
