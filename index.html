@@ -160,7 +160,7 @@
     0% { transform: scale(1); }
     100% { transform: scale(1.08); }
   }
-  
+
   .weather-badge {
     display: flex;
     flex-direction: column;
@@ -381,7 +381,7 @@
   .dialog-card {
     background: var(--card-bg);
     border: 4px solid var(--ink);
-    box-shadow: 
+    box-shadow:
       -4px 0 0 0 var(--ink),
        4px 0 0 0 var(--ink),
        0 -4px 0 0 var(--ink),
@@ -769,6 +769,7 @@
   }
 </style>
 <link rel="stylesheet" href="results.css">
+<link rel="stylesheet" href="hud.css">
 </head>
 <body>
 
@@ -780,13 +781,21 @@
 <!-- In-Game HUD Layer -->
 <div id="hud" class="hidden">
   <div class="hud-top">
-    <div class="hud-pill">
-      <svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="2" width="12" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="12" height="1" fill="#0077b6"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="0" y="4" width="1" height="1" fill="#1c1b19"/><rect x="1" y="4" width="1" height="1" fill="#0077b6"/><rect x="2" y="4" width="12" height="1" fill="#90e0ef"/><rect x="14" y="4" width="1" height="1" fill="#0077b6"/><rect x="15" y="4" width="1" height="1" fill="#1c1b19"/><rect x="0" y="5" width="1" height="1" fill="#1c1b19"/><rect x="1" y="5" width="1" height="1" fill="#0077b6"/><rect x="2" y="5" width="12" height="1" fill="#90e0ef"/><rect x="14" y="5" width="1" height="1" fill="#0077b6"/><rect x="15" y="5" width="1" height="1" fill="#1c1b19"/><rect x="0" y="6" width="1" height="1" fill="#1c1b19"/><rect x="1" y="6" width="14" height="1" fill="#0077b6"/><rect x="15" y="6" width="1" height="1" fill="#1c1b19"/><rect x="1" y="7" width="1" height="1" fill="#1c1b19"/><rect x="2" y="7" width="12" height="1" fill="#0077b6"/><rect x="14" y="7" width="1" height="1" fill="#1c1b19"/><rect x="1" y="8" width="1" height="1" fill="#1c1b19"/><rect x="2" y="8" width="12" height="1" fill="#0077b6"/><rect x="14" y="8" width="1" height="1" fill="#1c1b19"/><rect x="2" y="9" width="1" height="1" fill="#1c1b19"/><rect x="3" y="9" width="10" height="1" fill="#0077b6"/><rect x="13" y="9" width="1" height="1" fill="#1c1b19"/><rect x="2" y="10" width="1" height="1" fill="#1c1b19"/><rect x="3" y="10" width="10" height="1" fill="#0077b6"/><rect x="13" y="10" width="1" height="1" fill="#1c1b19"/><rect x="3" y="11" width="10" height="1" fill="#1c1b19"/></svg> <span id="label-hud-score">SCORE:</span> <b id="hud-score">0</b>
+    <div class="hud-score-group">
+      <div class="score-slip">
+        <span id="label-hud-score">SCORE:</span>
+        <b id="hud-score">0</b>
+        <div class="hud-record"><svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="1" width="2" height="1" fill="#1c1b19"/><rect x="12" y="1" width="2" height="1" fill="#1c1b19"/><rect x="1" y="2" width="1" height="1" fill="#1c1b19"/><rect x="2" y="2" width="2" height="1" fill="#d49b00"/><rect x="4" y="2" width="1" height="1" fill="#1c1b19"/><rect x="11" y="2" width="1" height="1" fill="#1c1b19"/><rect x="12" y="2" width="2" height="1" fill="#d49b00"/><rect x="14" y="2" width="1" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="2" height="1" fill="#d49b00"/><rect x="4" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="1" height="1" fill="#1c1b19"/><rect x="12" y="3" width="2" height="1" fill="#d49b00"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="2" height="1" fill="#1c1b19"/><rect x="5" y="4" width="6" height="1" fill="#1c1b19"/><rect x="12" y="4" width="2" height="1" fill="#1c1b19"/><rect x="4" y="5" width="1" height="1" fill="#1c1b19"/><rect x="5" y="5" width="6" height="1" fill="#f5b800"/><rect x="11" y="5" width="1" height="1" fill="#1c1b19"/><rect x="4" y="6" width="1" height="1" fill="#1c1b19"/><rect x="5" y="6" width="1" height="1" fill="#f5b800"/><rect x="6" y="6" width="4" height="1" fill="#fff3a8"/><rect x="10" y="6" width="1" height="1" fill="#f5b800"/><rect x="11" y="6" width="1" height="1" fill="#1c1b19"/><rect x="4" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="7" width="1" height="1" fill="#f5b800"/><rect x="6" y="7" width="1" height="1" fill="#fff3a8"/><rect x="7" y="7" width="2" height="1" fill="#f5b800"/><rect x="9" y="7" width="1" height="1" fill="#fff3a8"/><rect x="10" y="7" width="1" height="1" fill="#f5b800"/><rect x="11" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="8" width="1" height="1" fill="#f5b800"/><rect x="7" y="8" width="2" height="1" fill="#fff3a8"/><rect x="9" y="8" width="1" height="1" fill="#f5b800"/><rect x="10" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="9" width="2" height="1" fill="#f5b800"/><rect x="9" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="10" width="2" height="1" fill="#1c1b19"/><rect x="6" y="11" width="1" height="1" fill="#1c1b19"/><rect x="7" y="11" width="2" height="1" fill="#f5b800"/><rect x="9" y="11" width="1" height="1" fill="#1c1b19"/><rect x="5" y="12" width="1" height="1" fill="#1c1b19"/><rect x="6" y="12" width="4" height="1" fill="#f5b800"/><rect x="10" y="12" width="1" height="1" fill="#1c1b19"/><rect x="4" y="13" width="1" height="1" fill="#1c1b19"/><rect x="5" y="13" width="6" height="1" fill="#f5b800"/><rect x="11" y="13" width="1" height="1" fill="#1c1b19"/><rect x="4" y="14" width="8" height="1" fill="#1c1b19"/></svg> <span id="label-hud-record">RECORD:</span> <b id="hud-best">0</b>
     </div>
-    <div class="hud-pill" id="hud-round-pill">
-      <span id="label-hud-round">ROUND:</span> <b id="hud-round">1/3</b>
+      </div>
+      <div class="combo-pill hidden" id="hud-combo-pill"><b id="hud-combo-text">x2 COMBO</b></div>
     </div>
-    <div class="hud-pill weather-badge">
+    <div class="hud-conditions">
+      <div id="hud-round-pill">
+        <div class="round-line" aria-hidden="true"><i class="current"></i><i></i><i></i></div>
+        <span id="label-hud-round">ROUND:</span> <b id="hud-round">1/3</b>
+      </div>
+      <div class="hud-pill weather-badge">
       <div class="weather-header-row">
         <span id="hud-weather-icon"><svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="7" y="0" width="2" height="1" fill="#1c1b19"/><rect x="7" y="1" width="2" height="1" fill="#1c1b19"/><rect x="2" y="2" width="1" height="1" fill="#1c1b19"/><rect x="13" y="2" width="1" height="1" fill="#1c1b19"/><rect x="3" y="3" width="1" height="1" fill="#1c1b19"/><rect x="6" y="3" width="4" height="1" fill="#1c1b19"/><rect x="12" y="3" width="1" height="1" fill="#1c1b19"/><rect x="4" y="4" width="2" height="1" fill="#1c1b19"/><rect x="6" y="4" width="4" height="1" fill="#f5b800"/><rect x="10" y="4" width="2" height="1" fill="#1c1b19"/><rect x="3" y="5" width="1" height="1" fill="#1c1b19"/><rect x="4" y="5" width="8" height="1" fill="#f5b800"/><rect x="12" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="6" width="1" height="1" fill="#1c1b19"/><rect x="3" y="6" width="10" height="1" fill="#f5b800"/><rect x="13" y="6" width="1" height="1" fill="#1c1b19"/><rect x="1" y="7" width="2" height="1" fill="#1c1b19"/><rect x="3" y="7" width="10" height="1" fill="#f5b800"/><rect x="13" y="7" width="2" height="1" fill="#1c1b19"/><rect x="1" y="8" width="2" height="1" fill="#1c1b19"/><rect x="3" y="8" width="10" height="1" fill="#f5b800"/><rect x="13" y="8" width="2" height="1" fill="#1c1b19"/><rect x="2" y="9" width="1" height="1" fill="#1c1b19"/><rect x="3" y="9" width="10" height="1" fill="#f5b800"/><rect x="13" y="9" width="1" height="1" fill="#1c1b19"/><rect x="3" y="10" width="1" height="1" fill="#1c1b19"/><rect x="4" y="10" width="8" height="1" fill="#f5b800"/><rect x="12" y="10" width="1" height="1" fill="#1c1b19"/><rect x="4" y="11" width="2" height="1" fill="#1c1b19"/><rect x="6" y="11" width="4" height="1" fill="#f5b800"/><rect x="10" y="11" width="2" height="1" fill="#1c1b19"/><rect x="3" y="12" width="1" height="1" fill="#1c1b19"/><rect x="6" y="12" width="4" height="1" fill="#1c1b19"/><rect x="12" y="12" width="1" height="1" fill="#1c1b19"/><rect x="2" y="13" width="1" height="1" fill="#1c1b19"/><rect x="13" y="13" width="1" height="1" fill="#1c1b19"/><rect x="7" y="14" width="2" height="1" fill="#1c1b19"/><rect x="7" y="15" width="2" height="1" fill="#1c1b19"/></svg></span>
         <span id="hud-weather-label">CLEAR SKIES</span>
@@ -795,25 +804,7 @@
         <div id="weather-bar" class="weather-bar-fill"></div>
       </div>
     </div>
-    <div class="hud-pill combo-pill hidden" id="hud-combo-pill">
-      <b id="hud-combo-text">x2 COMBO</b>
-    </div>
-    <div class="hud-pill tsinelas-pill" id="hud-tsinelas-pill" title="Nanay's Rage Meter">
-      <canvas id="hud-tsinelas-canvas" width="14" height="20" style="display: inline-block; vertical-align: middle;"></canvas>
-      <span id="label-hud-tsinelas">RAGE:</span>
-      <div class="tsinelas-bar-container">
-        <div id="tsinelas-bar" class="tsinelas-bar-fill"></div>
-      </div>
-      <b id="hud-tsinelas-val">0%</b>
-    </div>
-    <div class="hud-pill utos-pill hidden" id="hud-utos-pill">
-      <span style="font-size: 11px;">⚡</span>
-      <span id="label-hud-utos">UTOS:</span>
-      <b id="hud-utos-name">KUMOT</b>
-      <span class="utos-timer" id="hud-utos-timer">8s</span>
-    </div>
-    <div class="hud-pill">
-      <svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="1" width="2" height="1" fill="#1c1b19"/><rect x="12" y="1" width="2" height="1" fill="#1c1b19"/><rect x="1" y="2" width="1" height="1" fill="#1c1b19"/><rect x="2" y="2" width="2" height="1" fill="#d49b00"/><rect x="4" y="2" width="1" height="1" fill="#1c1b19"/><rect x="11" y="2" width="1" height="1" fill="#1c1b19"/><rect x="12" y="2" width="2" height="1" fill="#d49b00"/><rect x="14" y="2" width="1" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="2" height="1" fill="#d49b00"/><rect x="4" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="1" height="1" fill="#1c1b19"/><rect x="12" y="3" width="2" height="1" fill="#d49b00"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="2" height="1" fill="#1c1b19"/><rect x="5" y="4" width="6" height="1" fill="#1c1b19"/><rect x="12" y="4" width="2" height="1" fill="#1c1b19"/><rect x="4" y="5" width="1" height="1" fill="#1c1b19"/><rect x="5" y="5" width="6" height="1" fill="#f5b800"/><rect x="11" y="5" width="1" height="1" fill="#1c1b19"/><rect x="4" y="6" width="1" height="1" fill="#1c1b19"/><rect x="5" y="6" width="1" height="1" fill="#f5b800"/><rect x="6" y="6" width="4" height="1" fill="#fff3a8"/><rect x="10" y="6" width="1" height="1" fill="#f5b800"/><rect x="11" y="6" width="1" height="1" fill="#1c1b19"/><rect x="4" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="7" width="1" height="1" fill="#f5b800"/><rect x="6" y="7" width="1" height="1" fill="#fff3a8"/><rect x="7" y="7" width="2" height="1" fill="#f5b800"/><rect x="9" y="7" width="1" height="1" fill="#fff3a8"/><rect x="10" y="7" width="1" height="1" fill="#f5b800"/><rect x="11" y="7" width="1" height="1" fill="#1c1b19"/><rect x="5" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="8" width="1" height="1" fill="#f5b800"/><rect x="7" y="8" width="2" height="1" fill="#fff3a8"/><rect x="9" y="8" width="1" height="1" fill="#f5b800"/><rect x="10" y="8" width="1" height="1" fill="#1c1b19"/><rect x="6" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="9" width="2" height="1" fill="#f5b800"/><rect x="9" y="9" width="1" height="1" fill="#1c1b19"/><rect x="7" y="10" width="2" height="1" fill="#1c1b19"/><rect x="6" y="11" width="1" height="1" fill="#1c1b19"/><rect x="7" y="11" width="2" height="1" fill="#f5b800"/><rect x="9" y="11" width="1" height="1" fill="#1c1b19"/><rect x="5" y="12" width="1" height="1" fill="#1c1b19"/><rect x="6" y="12" width="4" height="1" fill="#f5b800"/><rect x="10" y="12" width="1" height="1" fill="#1c1b19"/><rect x="4" y="13" width="1" height="1" fill="#1c1b19"/><rect x="5" y="13" width="6" height="1" fill="#f5b800"/><rect x="11" y="13" width="1" height="1" fill="#1c1b19"/><rect x="4" y="14" width="8" height="1" fill="#1c1b19"/></svg> <span id="label-hud-record">RECORD:</span> <b id="hud-best">0</b>
+
     </div>
     <div class="hud-controls-group">
       <button id="btn-pause-hud" class="btn-icon" title="Pause Game (P)" aria-label="Pause Game"><svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="3" y="2" width="3" height="12" fill="#1c1b19"/><rect x="4" y="3" width="1" height="10" fill="#f5b800"/><rect x="10" y="2" width="3" height="12" fill="#1c1b19"/><rect x="11" y="3" width="1" height="10" fill="#f5b800"/></svg></button>
@@ -821,14 +812,39 @@
       <button id="btn-lang-hud" class="btn-icon" title="Toggle Language" aria-label="Toggle Language" style="font-size:7.5px;"><svg class="pixel-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="1" fill="#1c1b19"/><rect x="3" y="2" width="2" height="1" fill="#1c1b19"/><rect x="5" y="2" width="6" height="1" fill="#0038a8"/><rect x="11" y="2" width="2" height="1" fill="#1c1b19"/><rect x="2" y="3" width="1" height="1" fill="#1c1b19"/><rect x="3" y="3" width="2" height="1" fill="#0038a8"/><rect x="5" y="3" width="1" height="1" fill="#1c1b19"/><rect x="6" y="3" width="4" height="1" fill="#0038a8"/><rect x="10" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="2" height="1" fill="#0038a8"/><rect x="13" y="3" width="1" height="1" fill="#1c1b19"/><rect x="1" y="4" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="2" height="1" fill="#0038a8"/><rect x="4" y="4" width="2" height="1" fill="#1c1b19"/><rect x="6" y="4" width="4" height="1" fill="#0038a8"/><rect x="10" y="4" width="2" height="1" fill="#1c1b19"/><rect x="12" y="4" width="2" height="1" fill="#0038a8"/><rect x="14" y="4" width="1" height="1" fill="#1c1b19"/><rect x="1" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="5" width="2" height="1" fill="#0038a8"/><rect x="4" y="5" width="1" height="1" fill="#1c1b19"/><rect x="5" y="5" width="6" height="1" fill="#0038a8"/><rect x="11" y="5" width="1" height="1" fill="#1c1b19"/><rect x="12" y="5" width="2" height="1" fill="#0038a8"/><rect x="14" y="5" width="1" height="1" fill="#1c1b19"/><rect x="0" y="6" width="1" height="1" fill="#1c1b19"/><rect x="1" y="6" width="2" height="1" fill="#0038a8"/><rect x="3" y="6" width="1" height="1" fill="#1c1b19"/><rect x="4" y="6" width="8" height="1" fill="#0038a8"/><rect x="12" y="6" width="1" height="1" fill="#1c1b19"/><rect x="13" y="6" width="2" height="1" fill="#0038a8"/><rect x="15" y="6" width="1" height="1" fill="#1c1b19"/><rect x="0" y="7" width="1" height="1" fill="#1c1b19"/><rect x="1" y="7" width="14" height="1" fill="#0038a8"/><rect x="15" y="7" width="1" height="1" fill="#1c1b19"/><rect x="0" y="8" width="1" height="1" fill="#1c1b19"/><rect x="1" y="8" width="14" height="1" fill="#0038a8"/><rect x="15" y="8" width="1" height="1" fill="#1c1b19"/><rect x="0" y="9" width="1" height="1" fill="#1c1b19"/><rect x="1" y="9" width="2" height="1" fill="#0038a8"/><rect x="3" y="9" width="1" height="1" fill="#1c1b19"/><rect x="4" y="9" width="8" height="1" fill="#0038a8"/><rect x="12" y="9" width="1" height="1" fill="#1c1b19"/><rect x="13" y="9" width="2" height="1" fill="#0038a8"/><rect x="15" y="9" width="1" height="1" fill="#1c1b19"/><rect x="1" y="10" width="1" height="1" fill="#1c1b19"/><rect x="2" y="10" width="2" height="1" fill="#0038a8"/><rect x="4" y="10" width="1" height="1" fill="#1c1b19"/><rect x="5" y="10" width="6" height="1" fill="#0038a8"/><rect x="11" y="10" width="1" height="1" fill="#1c1b19"/><rect x="12" y="10" width="2" height="1" fill="#0038a8"/><rect x="14" y="10" width="1" height="1" fill="#1c1b19"/><rect x="1" y="11" width="1" height="1" fill="#1c1b19"/><rect x="2" y="11" width="2" height="1" fill="#0038a8"/><rect x="4" y="11" width="2" height="1" fill="#1c1b19"/><rect x="6" y="11" width="4" height="1" fill="#0038a8"/><rect x="10" y="11" width="2" height="1" fill="#1c1b19"/><rect x="12" y="11" width="2" height="1" fill="#0038a8"/><rect x="14" y="11" width="1" height="1" fill="#1c1b19"/><rect x="2" y="12" width="1" height="1" fill="#1c1b19"/><rect x="3" y="12" width="2" height="1" fill="#0038a8"/><rect x="5" y="12" width="1" height="1" fill="#1c1b19"/><rect x="6" y="12" width="4" height="1" fill="#0038a8"/><rect x="10" y="12" width="1" height="1" fill="#1c1b19"/><rect x="11" y="12" width="2" height="1" fill="#0038a8"/><rect x="13" y="12" width="1" height="1" fill="#1c1b19"/><rect x="3" y="13" width="2" height="1" fill="#1c1b19"/><rect x="5" y="13" width="6" height="1" fill="#0038a8"/><rect x="11" y="13" width="2" height="1" fill="#1c1b19"/><rect x="5" y="14" width="6" height="1" fill="#1c1b19"/></svg> <span id="lang-hud-text">TL</span></button>
     </div>
   </div>
-
   <div class="hud-bottom">
+    <div class="nanay-station">
+      <div class="nanay-panel">
+        <button id="hud-nanay-button" aria-label="Talk to Nanay" title="Nanay"><canvas id="hud-nanay" width="40" height="40" aria-hidden="true"></canvas></button>
+        <div class="nanay-meter">
+          <span class="nanay-name">NANAY</span>
+          <div class="hud-pill tsinelas-pill" id="hud-tsinelas-pill" title="Nanay's Rage Meter">
+            <canvas id="hud-tsinelas-canvas" width="14" height="20" aria-hidden="true"></canvas>
+            <span id="label-hud-tsinelas">RAGE:</span><b id="hud-tsinelas-val">0%</b>
+            <div class="tsinelas-bar-container" role="meter" aria-label="Nanay rage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="tsinelas-bar" class="tsinelas-bar-fill"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="hud-pill utos-pill hidden" id="hud-utos-pill">
+        <svg width="12" height="18" viewBox="0 0 12 18" aria-hidden="true" shape-rendering="crispEdges"><path d="M6 0H11L8 6H12L3 18L5 10H0Z" fill="#92400e"/></svg>
+        <span id="label-hud-utos">UTOS:</span><b id="hud-utos-name">KUMOT</b><span class="utos-timer" id="hud-utos-timer">8s</span>
+      </div>
+      <button id="hud-nanay-speech" class="hidden" title="Dismiss Nanay's message"></button>
+    </div>
     <div class="hud-tip" id="hud-status">Drag clothes into the blue basin before it rains! (Space = auto-save)</div>
-    <div id="portrait-guidance">For a larger view, turn your phone sideways.</div>
-    <div class="hud-pill">
-      <svg class="pixel-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="2" y="1" width="3" height="1" fill="#1c1b19"/><rect x="11" y="1" width="3" height="1" fill="#1c1b19"/><rect x="1" y="2" width="1" height="1" fill="#1c1b19"/><rect x="2" y="2" width="3" height="1" fill="#ffffff"/><rect x="5" y="2" width="1" height="1" fill="#1c1b19"/><rect x="10" y="2" width="1" height="1" fill="#1c1b19"/><rect x="11" y="2" width="3" height="1" fill="#ffffff"/><rect x="14" y="2" width="1" height="1" fill="#1c1b19"/><rect x="1" y="3" width="1" height="1" fill="#1c1b19"/><rect x="2" y="3" width="3" height="1" fill="#ffffff"/><rect x="5" y="3" width="1" height="1" fill="#1c1b19"/><rect x="10" y="3" width="1" height="1" fill="#1c1b19"/><rect x="11" y="3" width="3" height="1" fill="#ffffff"/><rect x="14" y="3" width="1" height="1" fill="#1c1b19"/><rect x="1" y="4" width="1" height="1" fill="#1c1b19"/><rect x="2" y="4" width="4" height="1" fill="#ffffff"/><rect x="6" y="4" width="4" height="1" fill="#1c1b19"/><rect x="10" y="4" width="4" height="1" fill="#ffffff"/><rect x="14" y="4" width="1" height="1" fill="#1c1b19"/><rect x="1" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="5" width="12" height="1" fill="#ffffff"/><rect x="14" y="5" width="1" height="1" fill="#1c1b19"/><rect x="2" y="6" width="1" height="1" fill="#1c1b19"/><rect x="3" y="6" width="10" height="1" fill="#ffffff"/><rect x="13" y="6" width="1" height="1" fill="#1c1b19"/><rect x="2" y="7" width="1" height="1" fill="#1c1b19"/><rect x="3" y="7" width="10" height="1" fill="#ffffff"/><rect x="13" y="7" width="1" height="1" fill="#1c1b19"/><rect x="2" y="8" width="1" height="1" fill="#1c1b19"/><rect x="3" y="8" width="10" height="1" fill="#ffffff"/><rect x="13" y="8" width="1" height="1" fill="#1c1b19"/><rect x="2" y="9" width="1" height="1" fill="#1c1b19"/><rect x="3" y="9" width="10" height="1" fill="#ffffff"/><rect x="13" y="9" width="1" height="1" fill="#1c1b19"/><rect x="2" y="10" width="1" height="1" fill="#1c1b19"/><rect x="3" y="10" width="10" height="1" fill="#ffffff"/><rect x="13" y="10" width="1" height="1" fill="#1c1b19"/><rect x="2" y="11" width="1" height="1" fill="#1c1b19"/><rect x="3" y="11" width="10" height="1" fill="#ffffff"/><rect x="13" y="11" width="1" height="1" fill="#1c1b19"/><rect x="2" y="12" width="1" height="1" fill="#1c1b19"/><rect x="3" y="12" width="10" height="1" fill="#ffffff"/><rect x="13" y="12" width="1" height="1" fill="#1c1b19"/><rect x="2" y="13" width="12" height="1" fill="#1c1b19"/></svg> <span id="label-hud-count">SAVED:</span> <b id="hud-count">0/19</b>
+    <div class="laundry-tally" id="hud-laundry">
+      <svg class="batya-icon" width="60" height="44" viewBox="0 0 30 22" shape-rendering="crispEdges" aria-hidden="true">
+        <path d="M9 0H13V2H17V0H21L24 4L21 7V13H9V7L6 4Z" fill="#17232b"/>
+        <path d="M9 2H12V4H18V2H21L22 4L20 5H19V12H11V5H10L8 4Z" fill="#fff3d4"/>
+        <path d="M2 10H28V12H30V16H28V19H26V22H4V19H2V16H0V12H2Z" fill="#17232b"/>
+        <path d="M2 12H28V15H26V18H24V20H6V18H4V15H2Z" fill="#0077b6"/>
+        <path d="M3 12H27V14H3Z" fill="#90e0ef"/><path d="M7 16H9V19H7ZM12 16H14V19H12ZM17 16H19V19H17ZM22 16H24V18H22Z" fill="#00558b"/>
+      </svg>
+      <span id="label-hud-count">SAVED:</span><b id="hud-count">0/19</b>
+      <div class="laundry-track" aria-hidden="true"><div id="laundry-progress"></div></div>
     </div>
   </div>
+  <div id="portrait-guidance">For a larger view, turn your phone sideways.</div>
 </div>
 
 <!-- Title Screen Overlay -->
@@ -1075,7 +1091,7 @@
       weatherCalm: "CLEAR SKIES",
       weatherBreezy: "STRONG GUSTS!",
       weatherStorm: "RAINING NOW!",
-      weatherFreeze: "TIME FROZEN! ⏳",
+      weatherFreeze: "TIME FROZEN!",
       tipCalm: "Drag laundry into the blue tub! ([Space] Auto-Save • [P] Pause • [R] Restart)",
       tipBreezy: "Wind gusts are snapping clothespins! Catch flying clothes mid-air! ([P] Pause • [R] Restart)",
       tipStorm: "It's pouring! Rush to save remaining clothes before they get soaked! ([P] Pause • [R] Restart)",
@@ -1157,7 +1173,7 @@
       weatherCalm: "MAALIWALAS PA",
       weatherBreezy: "HANGING HABAGAT!",
       weatherStorm: "UMUULAN NA!",
-      weatherFreeze: "TIGIL-ORAS! ⏳",
+      weatherFreeze: "TIGIL-ORAS!",
       tipCalm: "I-drag ang damit sa asul na batya! ([Space] Auto-Salba • [P] Pause • [R] Ulitin)",
       tipBreezy: "May bugso ng hangin! Saluhin ang mga damit na lilipad! ([P] Pause • [R] Ulitin)",
       tipStorm: "Uulan na! Bilisan ang pagliligpit bago mabasa ang sinampay! ([P] Pause • [R] Ulitin)",
@@ -1411,6 +1427,9 @@
     btnLangTitleText.textContent = dict.langTitleBtn;
     langHudText.textContent = dict.langHudText;
 
+    document.getElementById('hud-nanay-button').setAttribute('aria-label', lang === 'tl' ? 'Kausapin si Nanay' : 'Talk to Nanay');
+    document.getElementById('hud-nanay-speech').setAttribute('title', lang === 'tl' ? 'Isara ang mensahe ni Nanay' : "Dismiss Nanay's message");
+    tsinelasBar.parentElement.setAttribute('aria-label', lang === 'tl' ? 'Galit ni Nanay' : "Nanay's rage");
     labelHudScore.textContent = dict.scoreLabel;
     if (labelHudRound) labelHudRound.textContent = dict.roundLabel;
     if (labelHudTsinelas) labelHudTsinelas.textContent = dict.tsinelasLabel;
@@ -1482,14 +1501,18 @@
     updateSoundUI(audio.isMuted());
   }
 
+  const SVG_WIND = '<svg class="pixel-icon" width="26" height="26" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path d="M0 4H10V2H13V4H15V7H13V9H3V7H13V5H0ZM1 11H10V9H13V11H15V14H13V16H9V14H13V13H1Z" fill="#163e76"/><path d="M0 1H6V3H0ZM0 14H5V16H0Z" fill="#c28518"/></svg>';
+  const SVG_FREEZE = '<svg class="pixel-icon" width="26" height="26" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path d="M7 0H9V5L12 2L14 4L10 7H16V9H10L14 12L12 14L9 10V16H7V10L4 14L2 12L6 9H0V7H6L2 4L4 2L7 5Z" fill="#163e76"/><path d="M6 6H10V10H6Z" fill="#90e0ef"/></svg>';
+
   // Update Weather UI
   function updateWeatherUI(urgency) {
     currentWeatherUrgency = urgency;
+    document.querySelector('.weather-badge').dataset.weather = urgency;
     const dict = I18N[currentLang];
     if (urgency === 'freeze') {
       hudWeatherLabel.textContent = dict.weatherFreeze;
-      weatherBar.style.background = '#ffd700';
-      hudWeatherIcon.innerHTML = SVG_SUN;
+      weatherBar.style.background = '#0077b6';
+      hudWeatherIcon.innerHTML = SVG_FREEZE;
       hudStatus.textContent = dict.tipFreeze;
     } else if (urgency === 'calm') {
       hudWeatherLabel.textContent = dict.weatherCalm;
@@ -1498,8 +1521,8 @@
       hudStatus.textContent = dict.tipCalm;
     } else if (urgency === 'breezy') {
       hudWeatherLabel.textContent = dict.weatherBreezy;
-      weatherBar.style.background = '#f97316';
-      hudWeatherIcon.innerHTML = SVG_SUN;
+      weatherBar.style.background = '#c28518';
+      hudWeatherIcon.innerHTML = SVG_WIND;
       hudStatus.textContent = dict.tipBreezy;
     } else {
       hudWeatherLabel.textContent = dict.weatherStorm;
@@ -1545,6 +1568,10 @@
   const game = new SampayanGame(renderer, audio, {
     onScoreChange(score) {
       hudScore.textContent = score % 1 ? score.toFixed(1) : score;
+      hudScore.style.setProperty('--score-compact-size', `${Math.min(16, 60 / hudScore.textContent.length)}px`);
+      hudScore.classList.remove('score-tick');
+      void hudScore.offsetWidth;
+      hudScore.classList.add('score-tick');
     },
     onComboChange(combo, mult) {
       if (hudComboPill) {
@@ -1565,6 +1592,12 @@
     },
     onRoundChange(round, maxRounds) {
       if (hudRound) hudRound.textContent = `${round}/${maxRounds}`;
+      const line = document.querySelector('.round-line');
+      line.replaceChildren(...Array.from({ length: maxRounds }, (_, i) => {
+        const peg = document.createElement('i');
+        peg.className = i + 1 < round ? 'complete' : i + 1 === round ? 'current' : '';
+        return peg;
+      }));
     },
     onWeatherChange(w) {
       weatherBar.style.width = `${Math.round(w.progress * 100)}%`;
@@ -1572,11 +1605,14 @@
     },
     onItemCountChange(saved, total) {
       hudCount.textContent = `${saved}/${total}`;
+      document.getElementById('laundry-progress').style.width = `${total ? Math.min(100, saved / total * 100) : 0}%`;
+      document.getElementById('hud-laundry').classList.toggle('complete', total > 0 && saved === total);
     },
     onTsinelasChange(percent, isRage) {
       if (!hudTsinelasVal || !tsinelasBar) return;
       hudTsinelasVal.textContent = `${Math.round(percent)}%`;
       tsinelasBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      tsinelasBar.parentElement.setAttribute('aria-valuenow', Math.round(percent));
 
       tsinelasBar.classList.remove('warning', 'danger');
       if (percent >= 75) {
@@ -1695,6 +1731,21 @@
   });
   window.game = game;
 
+  // The original animated portrait now lives beside Nanay's threat meter.
+  game.nanayHudCanvas = document.getElementById('hud-nanay');
+  game.nanayHudSpeech = document.getElementById('hud-nanay-speech');
+  document.getElementById('hud-nanay-button').addEventListener('click', () => {
+    game.pokeNanay();
+    canvas.focus({ preventScroll: true });
+  });
+  game.nanayHudSpeech.addEventListener('click', () => {
+    if (game.phase !== 'play' || game.paused) return;
+    game.nanaySpeech = null;
+    game.nanayHudSpeech.classList.add('hidden');
+    canvas.focus({ preventScroll: true });
+    audio.playSfx('pop');
+  });
+
   game.setLanguage(currentLang);
 
   // Initial Language and Score display
@@ -1709,8 +1760,24 @@
   }
 
   // Responsive canvas scale
-  renderer.fit();
-  window.addEventListener('resize', () => renderer.fit());
+  function fitGameplayHud() {
+    renderer.fit();
+    canvas.style.transform = '';
+    if (hud.classList.contains('hidden') || !matchMedia('(max-width: 600px) and (orientation: portrait)').matches) return;
+    // Fit the complete scene between the two HUD regions, including space for dialogue.
+    const top = hud.querySelector('.hud-top').getBoundingClientRect().bottom + 6;
+    const bottom = hud.querySelector('.hud-bottom').getBoundingClientRect().top - 6;
+    const height = Math.max(48, bottom - top);
+    const scale = Math.min((innerWidth - 20) / renderer.width, height / renderer.height);
+    canvas.style.width = `${Math.round(renderer.width * scale)}px`;
+    canvas.style.height = `${Math.round(renderer.height * scale)}px`;
+    canvas.style.transform = `translateY(${Math.round((top + bottom) / 2 - innerHeight / 2)}px)`;
+  }
+  fitGameplayHud();
+  window.addEventListener('resize', fitGameplayHud);
+  const hudLayoutObserver = new ResizeObserver(fitGameplayHud);
+  hudLayoutObserver.observe(hud.querySelector('.hud-top'));
+  hudLayoutObserver.observe(hud.querySelector('.hud-bottom'));
 
   // Game Loop
   let lastTime = performance.now();

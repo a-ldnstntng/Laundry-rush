@@ -4067,24 +4067,48 @@ class SampayanGame {
     };
   }
 
+  pokeNanay() {
+    if (this.phase !== 'play' || this.paused || this.isInCutscene() || this.held) return;
+    this.audio.ensureContext();
+    this.nanayPokeTimer = 0.45;
+    if (!this.nanaySpeech || (this.nanaySpeech.maxTimer - this.nanaySpeech.timer) >= 0.25) {
+      const clickQuotesTl = [
+        "Kilos na, Nak! Mag-aamoy kulob ang mga damit!",
+        "Aba, bakit ako pinipindot mo? Yung sampayan asikasuhin mo!",
+        "Huwag kang tatanga-tanga dyan, bilisan mo!",
+        "Unahin mo yung mga uniporme at makakapal!",
+      ];
+      const clickQuotesEn = [
+        "Move it, son! The clothes will smell musty!",
+        "Why are you tapping me? Take care of the clotheslines!",
+        "Don't just daydream, hurry up!",
+        "Grab the uniforms and thick clothes first!",
+      ];
+      const cIdx = Math.floor(Math.random() * clickQuotesTl.length);
+      this.setNanaySpeech(clickQuotesTl[cIdx], clickQuotesEn[cIdx], 2.4, 'scold');
+      this.audio.playSfx('pop');
+    }
+  }
+
   drawNanayBubble() {
     if (this.phase !== 'play') return;
-    const ctx = this.renderer.ctx;
+    const ctx = this.nanayHudCanvas ? this.nanayHudCanvas.getContext('2d') : this.renderer.ctx;
     if (!ctx) return;
+    if (this.nanayHudCanvas) ctx.clearRect(0, 0, 40, 40);
 
     if (!this.nanayPortraits) {
       this.initNanayPortraits();
     }
 
     const hasSpeech = Boolean(this.nanaySpeech);
-    const mood = (hasSpeech && this.nanaySpeech.mood) ? this.nanaySpeech.mood : 'normal';
+    const mood = (hasSpeech && this.nanaySpeech.mood) ? this.nanaySpeech.mood : (this.tsinelasMeter >= 75 || this.tsinelasRage ? 'scold' : this.tsinelasMeter >= 45 ? 'urgent' : 'normal');
     const text = hasSpeech ? (this.currentLang === 'tl' ? this.nanaySpeech.textTl : this.nanaySpeech.textEn) : null;
 
     ctx.save();
 
     // 1. Mother Icon around bottom left (visible throughout gameplay as retro arcade HUD avatar)
-    const ix = 8;
-    const iy = this.renderer.height - 56;
+    const ix = this.nanayHudCanvas ? 2 : 8;
+    const iy = this.nanayHudCanvas ? 2 : this.renderer.height - 56;
     const pw = 34;
     const ph = 34;
 
@@ -4139,7 +4163,9 @@ class SampayanGame {
       const glanceCycle = animTime % 9.0;
       const blinkCycle = animTime % 4.6;
 
-      if (blinkCycle < 0.05 && this.nanayPortraitBlinkHalf) {
+      if (mood !== 'normal') {
+        portraitCanvas = this.nanayPortraits[mood] || this.nanayPortraits.normal;
+      } else if (blinkCycle < 0.05 && this.nanayPortraitBlinkHalf) {
         portraitCanvas = this.nanayPortraitBlinkHalf;
       } else if (blinkCycle < 0.16 && this.nanayPortraitBlinkFull) {
         portraitCanvas = this.nanayPortraitBlinkFull;
@@ -4272,6 +4298,18 @@ class SampayanGame {
       ctx.fillStyle = '#181210';
       ctx.fillRect(popX + 2, popY + 2, 2, 3);
       ctx.fillRect(popX + 2, popY + 6, 2, 1);
+    }
+
+    if (this.nanayHudSpeech) {
+      this.nanayHudSpeech.classList.toggle('hidden', !text);
+      if (text && this.nanayHudSpeech.textContent !== text) {
+        this.nanayHudSpeech.textContent = text;
+        this.nanayHudSpeech.scrollTop = 0;
+      }
+      this.nanayHudSpeech.dataset.mood = mood;
+      this.lastNanayBubbleRect = null;
+      ctx.restore();
+      return;
     }
 
     // 2. Chat Bubble Connecting to Mother's Icon (when Mother has speech)
@@ -5069,25 +5107,8 @@ class SampayanGame {
       carrySuspended = false;
 
       // Interactive click / tap reaction on Mother's Icon at bottom-left
-      if (!this.held && this.pointer.x >= 6 && this.pointer.x <= 44 && this.pointer.y >= this.renderer.height - 60 && this.pointer.y <= this.renderer.height - 18) {
-        this.nanayPokeTimer = 0.45;
-        if (!this.nanaySpeech || (this.nanaySpeech.maxTimer - this.nanaySpeech.timer) >= 0.25) {
-          const clickQuotesTl = [
-            "Kilos na, Nak! Mag-aamoy kulob ang mga damit!",
-            "Aba, bakit ako pinipindot mo? Yung sampayan asikasuhin mo!",
-            "Huwag kang tatanga-tanga dyan, bilisan mo!",
-            "Unahin mo yung mga uniporme at makakapal!",
-          ];
-          const clickQuotesEn = [
-            "Move it, son! The clothes will smell musty!",
-            "Why are you tapping me? Take care of the clotheslines!",
-            "Don't just daydream, hurry up!",
-            "Grab the uniforms and thick clothes first!",
-          ];
-          const cIdx = Math.floor(Math.random() * clickQuotesTl.length);
-          this.setNanaySpeech(clickQuotesTl[cIdx], clickQuotesEn[cIdx], 2.4, 'scold');
-          this.audio.playSfx('pop');
-        }
+      if (!this.nanayHudCanvas && !this.held && this.pointer.x >= 6 && this.pointer.x <= 44 && this.pointer.y >= this.renderer.height - 60 && this.pointer.y <= this.renderer.height - 18) {
+        this.pokeNanay();
         return;
       }
 

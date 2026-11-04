@@ -1,6 +1,6 @@
 ---
 name: Sampayan Rush
-description: Filipino rooftop pixel arcade; documented results surface.
+description: Filipino rooftop pixel arcade; gameplay HUD and results surfaces.
 colors:
   report-paper: "#fff3d4"
   report-rule: "#c8cfba"
@@ -13,6 +13,8 @@ colors:
   title-paper: "#e5e6d3"
   action-ink: "#17232b"
   loss-red: "#a02b33"
+  basin-blue: "#0077b6"
+  basin-highlight: "#90e0ef"
 typography:
   headline:
     fontFamily: "'Press Start 2P', monospace"
@@ -36,6 +38,14 @@ typography:
     fontFamily: "'Press Start 2P', monospace"
     fontSize: "8px"
     lineHeight: 1.5
+  hud-score:
+    fontFamily: "'Press Start 2P', monospace"
+    fontSize: "23px"
+    lineHeight: 1.3
+  hud-dialogue:
+    fontFamily: "'VT323', monospace"
+    fontSize: "21px"
+    lineHeight: 1.1
   phone-label:
     fontFamily: "'VT323', monospace"
     fontSize: "18px"
@@ -78,7 +88,7 @@ components:
 
 **Creative North Star: "Nanay’s Laundry Report"**
 
-The existing world is a Filipino rooftop pixel arcade: expressive original character art, pixel type, square outlines and tactile block shadows. This document records the shipped end-of-run surface, rather than prescribing new compositions for gameplay or other screens.
+The existing world is a Filipino rooftop pixel arcade: expressive original character art, pixel type, square outlines and tactile block shadows. The gameplay HUD and end-of-run report share these materials while retaining their own compositions.
 
 The results surface turns Nanay’s judgment into a cream sheet clipped to a clothesline. A dim pre-rendered rooftop covers the finished game completely. The portrait, commentary and crooked grade stamp introduce the verdict; score and dry laundry dominate the tally. English and Tagalog share this structure.
 
@@ -163,6 +173,18 @@ A single cream, blue-ruled sheet with pegs, portrait, commentary, stamp and stat
 ### Nanay verdict
 
 Nanay shares one 32px portrait design between the animated HUD and results SVGs: a low side bun with a coral clip, swept dark hair with gray strands, a tapered jaw and visible neck, small gold earrings, a teal floral daster, and a cream bimpo with red woven stripes over one shoulder. Sloping, cropped shoulders replace the closed oval torso. Retain the warm skin, dark pixel outline and crisp nearest-neighbor scaling. The portrait is happy for grades S/A and disappointed for B/F. The stamp independently communicates S/A/B/F; slipper rage uses the red failure treatment and a smaller label. A record badge appears only for a new high score. On entry, results scroll resets to the top and keyboard focus moves to replay.
+
+### Gameplay HUD
+
+The approved “Nanay’s Rooftop” HUD carries the original game into household objects: a pegged score slip with subordinate record and conditional combo tag, hanging shirt round markers, a pegged weather sign, Nanay’s animated portrait joined to the galit meter, and a batya laundry tally. Use the original animated portrait artwork, including speech mouths, blink, poke reaction and scold/urgent expressions. Speech and urgent utos remain conditional. Normal and ultra combo share the paper/ink palette; ultra uses replay yellow rather than a neon glow.
+
+Desktop keeps score at upper left, round/weather at upper center, utilities at upper right and character/tally in the lower corners. English and Tagalog retain numeric values beside visual markers. Weather has distinct clear, wind, rain and frozen icons. Score receives a brief stepped upward tick; progress changes are restrained. Reduced motion disables CSS animation and transitions.
+
+Portrait phones arrange upper indicators in two rows and put speech, utos, character/tally and touch guidance in lower grid rows. The full scene scales proportionally into the measured space between those HUD regions; its camera stays unchanged. Normal lower content reserves 216px; long dialogue scrolls within 62px. The small-phone score scales its text to preserve fractional values. Short landscape uses a compact single-row header from 601px wide. Utility controls have at least 44px touch targets; Nanay’s button returns focus to the canvas so Space remains available.
+
+The speech control exposes its actual dialogue text, with the dismiss instruction in its title. The threat meter has a bilingual accessible label and numeric value. Blue normal, amber warning and red danger are supplemented by the percentage and Nanay’s expression. Saved laundry has both a numeric fraction and a filling track, with a pale green completion state.
+
+Evidence: `hud.css`, gameplay HUD markup/callbacks in `index.html`, portrait presentation in `game.js`, `.impeccable/hud-*.png`, and `.impeccable/hud-direction.md`. These are HUD decisions; preserve the results report below.
 
 ### Tally grid
 
